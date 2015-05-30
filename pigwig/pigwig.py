@@ -10,13 +10,6 @@ from .request_response import Request, Response
 from .templates_jinja import JinjaTemplateEngine
 
 class PigWig:
-	BASE_HEADERS = [
-		('Access-Control-Allow-Origin', '*'),
-		('Access-Control-Allow-Headers', 'Authorization, X-Requested-With, X-Request'),
-	]
-	DEFAULT_HEADERS = BASE_HEADERS
-	ERROR_HEADERS = BASE_HEADERS + [('Content-type', 'text/plain')]
-
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine):
 		if callable(routes):
 			routes = routes()
@@ -30,7 +23,7 @@ class PigWig:
 	def __call__(self, environ, start_response): # main WSGI entrypoint
 		try:
 			if environ['REQUEST_METHOD'] == 'OPTIONS':
-				start_response('200 OK', copy.copy(self.DEFAULT_HEADERS))
+				start_response('200 OK', copy.copy(Response.DEFAULT_HEADERS))
 				return []
 
 			request = self.build_request(environ)
@@ -44,17 +37,15 @@ class PigWig:
 			elif not isgenerator(response.body):
 				raise Exception(500, 'unhandled view response type: %s' % type(response.body))
 
-			headers = copy.copy(self.DEFAULT_HEADERS)
-			headers.append(('Content-Type', response.content_type))
-			start_response('200 OK', headers)
+			start_response('200 OK', response.headers)
 			return response.body
 		except HTTPException as e:
 			response = '%d %s' % (e.code, http.client.responses[e.code])
-			start_response(response, copy.copy(self.ERROR_HEADERS))
+			start_response(response, copy.copy(Response.ERROR_HEADERS))
 			return [e.body.encode('utf-8', 'replace')]
 		except:
 			tb = traceback.format_exc()
-			start_response('500 Internal Server Error', copy.copy(self.ERROR_HEADERS))
+			start_response('500 Internal Server Error', copy.copy(Response.ERROR_HEADERS))
 			return [tb.encode('utf-8', 'replace')]
 
 	def build_request(self, environ):
