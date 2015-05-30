@@ -72,11 +72,10 @@ class PigWig:
 				return route[1]
 		raise HTTPException(404, 'unhandled path: ' + path)
 
-	def main(self):
-		port = 8000
+	def main(self, host='0.0.0.0', port=8000):
 		if len(sys.argv) == 2:
 			port = int(sys.argv[1])
-		server = wsgiref.simple_server.make_server('0.0.0.0', port, self)
+		server = wsgiref.simple_server.make_server(host, port, self)
 		print('listening on', port)
 		server.serve_forever()
 
