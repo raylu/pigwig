@@ -33,7 +33,7 @@ class PigWig:
 			if not isinstance(response, Response):
 				response = Response(response)
 			if isinstance(response.body, str):
-				response.body = [response.body.encode('utf-8')]
+				response.body = [response.body.encode('utf-8')] # pylint: disable=no-member
 			elif not isgenerator(response.body):
 				raise Exception(500, 'unhandled view response type: %s' % type(response.body))
 
@@ -72,5 +72,6 @@ class PigWig:
 
 class HTTPException(Exception):
 	def __init__(self, code, body):
+		super().__init__(code, body)
 		self.code = code
 		self.body = body
