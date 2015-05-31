@@ -8,6 +8,7 @@ import wsgiref.simple_server
 
 from .request_response import Request, Response
 from .templates_jinja import JinjaTemplateEngine
+from . import reloader
 
 class PigWig:
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine):
@@ -64,6 +65,7 @@ class PigWig:
 		raise HTTPException(404, 'unhandled path: ' + path)
 
 	def main(self, host='0.0.0.0', port=8000):
+		reloader.init()
 		if len(sys.argv) == 2:
 			port = int(sys.argv[1])
 		server = wsgiref.simple_server.make_server(host, port, self)
