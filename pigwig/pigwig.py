@@ -1,6 +1,7 @@
 import copy
 import http.client
 from inspect import isgenerator
+import json
 import sys
 import traceback
 import urllib.parse
@@ -50,12 +51,25 @@ class PigWig:
 			return [tb.encode('utf-8', 'replace')]
 
 	def build_request(self, environ):
+		method = environ['REQUEST_METHOD']
+
 		qs = environ.get('QUERY_STRING')
 		if qs:
-			query = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True, errors='strict')
+			query = parse_qs(qs)
 		else:
 			query = {}
-		return Request(self, query)
+
+		content_length = environ.get('CONTENT_LENGTH')
+		if content_length:
+			content_length = int(content_length)
+		body = (environ['wsgi.input'], content_length)
+		content_type = environ.get('CONTENT_TYPE')
+		if content_type:
+			handler = self.content_handlers.get(content_type)
+			if handler:
+				body = handler(environ['wsgi.input'], content_length)
+
+		return Request(self, method, query, body, environ)
 
 	def get_handler(self, path):
 		path[1:].split('/')
@@ -71,6 +85,26 @@ class PigWig:
 		server = wsgiref.simple_server.make_server(host, port, self)
 		print('listening on', port)
 		server.serve_forever()
+
+	@staticmethod
+	def handle_urlencoded(body, length):
+		return parse_qs(body.read(length).decode('utf-8'))
+
+	@staticmethod
+	def handle_json(body, length):
+		return json.loads(body.read(length).decode('utf-8'))
+
+PigWig.content_handlers = {
+	'application/json': PigWig.handle_json,
+	'application/x-www-form-urlencoded': PigWig.handle_urlencoded,
+}
+
+def parse_qs(qs):
+	parsed = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True, errors='strict')
+	for k, v in parsed.items():
+		if len(v) == 1:
+			parsed[k] = v[0]
+	return parsed
 
 class HTTPException(Exception):
 	def __init__(self, code, body):

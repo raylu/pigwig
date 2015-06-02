@@ -1,9 +1,12 @@
 import copy
 
 class Request:
-	def __init__(self, app, query):
+	def __init__(self, app, method, query, body, wsgi_environ):
 		self.app = app
+		self.method = method
 		self.query = query
+		self.body = body
+		self.wsgi_environ = wsgi_environ
 
 class Response:
 	BASE_HEADERS = [
