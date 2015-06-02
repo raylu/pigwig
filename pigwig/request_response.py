@@ -2,6 +2,7 @@ import binascii
 import copy
 import hashlib
 import hmac
+import json
 import time
 
 from . import exceptions, reloader
@@ -42,6 +43,8 @@ class Response:
 	DEFAULT_HEADERS = BASE_HEADERS
 	ERROR_HEADERS = BASE_HEADERS + [('Content-type', 'text/plain')]
 
+	json_encoder = json.JSONEncoder(indent='\t')
+
 	def __init__(self, body=None, code=200, content_type='text/plain', location=None):
 		self.body = body
 		self.code = code
@@ -75,6 +78,16 @@ class Response:
 		signature = _hash(value_ts, request.app.cookie_secret)
 		value_signed = '%s|%s' % (value_ts, signature)
 		self.set_cookie(key, value_signed, **kwargs)
+
+	@classmethod
+	def json(cls, obj):
+		body = cls._gen_json(obj)
+		return Response(body, content_type='application/json')
+
+	@classmethod
+	def _gen_json(cls, obj):
+		for chunk in cls.json_encoder.iterencode(obj):
+			yield chunk.encode('utf-8')
 
 	@classmethod
 	def render(cls, request, template, context):
