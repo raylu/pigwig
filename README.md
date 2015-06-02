@@ -8,13 +8,13 @@ pigwig is a python 3 WSGI framework
 ```python
 #!/usr/bin/env python3
 
-from pigwig import PigWig
+from pigwig import PigWig, Response
 
 def root(request):
-	return 'hello, world!'
+	return Response('hello, world!')
 
 routes = [
-	('/', root),
+	('GET', '/', root),
 ]
 
 app = PigWig(routes)

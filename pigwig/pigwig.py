@@ -1,5 +1,6 @@
 import copy
 import http.client
+import http.cookies
 from inspect import isgenerator
 import json
 import sys
@@ -7,12 +8,12 @@ import traceback
 import urllib.parse
 import wsgiref.simple_server
 
+from . import exceptions, reloader
 from .request_response import Request, Response
 from .templates_jinja import JinjaTemplateEngine
-from . import reloader
 
 class PigWig:
-	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine):
+	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine, cookie_secret=None):
 		if callable(routes):
 			routes = routes()
 		self.routes = routes
@@ -22,6 +23,8 @@ class PigWig:
 		else:
 			self.template_engine = None
 
+		self.cookie_secret = cookie_secret
+
 	def __call__(self, environ, start_response): # main WSGI entrypoint
 		try:
 			if environ['REQUEST_METHOD'] == 'OPTIONS':
@@ -30,28 +33,31 @@ class PigWig:
 
 			request = self.build_request(environ)
 
-			handler = self.get_handler(environ['PATH_INFO'])
+			handler = self.get_handler(request.method, request.path)
 			response = handler(request)
-			if not isinstance(response, Response):
-				response = Response(response)
 			if isinstance(response.body, str):
 				response.body = [response.body.encode('utf-8')] # pylint: disable=no-member
+			elif response.body is None:
+				response.body = []
 			elif not isgenerator(response.body):
 				raise Exception(500, 'unhandled view response type: %s' % type(response.body))
 
-			start_response('200 OK', response.headers)
+			status_line = '%d %s' % (response.code, http.client.responses[response.code])
+			start_response(status_line, response.headers)
 			return response.body
-		except HTTPException as e:
-			response = '%d %s' % (e.code, http.client.responses[e.code])
-			start_response(response, copy.copy(Response.ERROR_HEADERS))
+		except exceptions.HTTPException as e:
+			status_line = '%d %s' % (e.code, http.client.responses[e.code])
+			start_response(status_line, copy.copy(Response.ERROR_HEADERS))
 			return [e.body.encode('utf-8', 'replace')]
 		except:
 			tb = traceback.format_exc()
+			sys.stderr.write(tb)
 			start_response('500 Internal Server Error', copy.copy(Response.ERROR_HEADERS))
 			return [tb.encode('utf-8', 'replace')]
 
 	def build_request(self, environ):
 		method = environ['REQUEST_METHOD']
+		path = environ['PATH_INFO']
 
 		qs = environ.get('QUERY_STRING')
 		if qs:
@@ -69,14 +75,19 @@ class PigWig:
 			if handler:
 				body = handler(environ['wsgi.input'], content_length)
 
-		return Request(self, method, query, body, environ)
+		cookies = http.cookies.SimpleCookie()
+		http_cookie = environ.get('HTTP_COOKIE')
+		if http_cookie:
+			cookies.load(http_cookie)
 
-	def get_handler(self, path):
+		return Request(self, method, path, query, body, cookies, environ)
+
+	def get_handler(self, method, path):
 		path[1:].split('/')
-		for route in self.routes:
-			if route[0] == path:
-				return route[1]
-		raise HTTPException(404, 'unhandled path: ' + path)
+		for r_method, r_path, r_handler in self.routes:
+			if r_method == method and r_path == path:
+				return r_handler
+		raise exceptions.HTTPException(404, 'unhandled path: ' + path)
 
 	def main(self, host='0.0.0.0', port=8000):
 		reloader.init()
@@ -105,9 +116,3 @@ def parse_qs(qs):
 		if len(v) == 1:
 			parsed[k] = v[0]
 	return parsed
-
-class HTTPException(Exception):
-	def __init__(self, code, body):
-		super().__init__(code, body)
-		self.code = code
-		self.body = body
