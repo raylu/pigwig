@@ -1,5 +1,16 @@
 {% extends 'base.jinja2' %}
 
 {% block body %}
-	hello, world!
+	{% for post in posts %}
+		<h2>{{ post['title'] }}</h2>
+		<blockquote>{{ post['body'] }}</blockquote>
+	{% endfor %}
+
+	<p>
+		{% if logged_in %}
+			<a href="/admin">admin</a>
+		{% else %}
+			<a href="/login">login</a>
+		{% endif %}
+	</p>
 {% endblock body %}

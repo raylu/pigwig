@@ -1,0 +1,11 @@
+{% extends 'base.jinja2' %}
+
+{% block body %}
+	<form method="post" action="/admin/post">
+		<input type="text" name="title" placeholder="title">
+		<br>
+		<textarea name="body"></textarea>
+		<br>
+		<input type="submit">
+	</form>
+{% endblock body %}
