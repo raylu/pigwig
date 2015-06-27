@@ -125,6 +125,7 @@ def main():
 		cur = db.execute('SELECT id FROM users LIMIT 1')
 	except sqlite3.OperationalError: # table doesn't exist
 		init_db()
+		cur = db.execute('SELECT id FROM users LIMIT 1')
 	if not cur.fetchone():
 		init_db()
 	app.main()
