@@ -3,3 +3,6 @@ class HTTPException(Exception):
 		super().__init__(code, body)
 		self.code = code
 		self.body = body
+
+class RouteConflict(Exception):
+	pass
