@@ -10,14 +10,14 @@ import wsgiref.simple_server
 
 from . import exceptions, reloader
 from .request_response import Request, Response
-from .routes import RouteTree
+from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
 class PigWig:
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine, cookie_secret=None):
 		if callable(routes):
 			routes = routes()
-		self.routes = RouteTree(routes)
+		self.routes = build_route_tree(routes)
 
 		if template_dir:
 			self.template_engine = template_engine(template_dir)
@@ -34,7 +34,7 @@ class PigWig:
 
 			request = self.build_request(environ)
 
-			handler, kwargs = self.routes.get_route(request.method, request.path)
+			handler, kwargs = self.routes.route(request.method, request.path)
 			response = handler(request, **kwargs)
 			if isinstance(response.body, str):
 				response.body = [response.body.encode('utf-8')] # pylint: disable=no-member
