@@ -1,5 +1,4 @@
 import copy
-import re
 import http.client
 import http.cookies
 from inspect import isgenerator
@@ -11,54 +10,8 @@ import wsgiref.simple_server
 
 from . import exceptions, reloader
 from .request_response import Request, Response
+from .routes import RouteTree
 from .templates_jinja import JinjaTemplateEngine
-
-class RouteDict(dict):
-	def __setitem__(self, key, value):
-		if key in self:
-			raise exceptions.RouteConflict()
-		else:
-			super().__setitem__(key, value)
-
-class RouteTree(RouteDict):
-	def __init__(self, routes):
-		for method, path, handler in routes:
-			path_elements = path[1:].split('/')
-			node = self
-			for element in path_elements:
-				param = re.match('<(\w+)>', element)
-				if param:
-					node['param'] = RouteDict()
-					node = node['param']
-					node['name'] = param.group(1)
-					node['methods'] = RouteDict()
-					continue
-				if element not in node:
-					node[element] = RouteDict()
-					node[element]['methods'] = RouteDict()
-				node = node[element]
-			node['methods'][method] = handler
-
-	def get_handler(self, method, path):
-		path_elements = path[1:].split('/')
-		node = self
-		kwargs = {}
-		for element in path_elements:
-			node_exists = node.get(element)
-			if not node_exists:
-				try:
-					node = node['param']
-				except KeyError:
-					raise exceptions.HTTPException(404, 'Route %s not found' % path)
-				key = node['name']
-				kwargs[key] = element
-			else:
-				node = node[element]
-		try:
-			handler = node['methods'][method]
-		except KeyError:
-			raise exceptions.HTTPException(405, 'Method %s not allowed' % method)
-		return handler, kwargs
 
 class PigWig:
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine, cookie_secret=None):
@@ -81,7 +34,7 @@ class PigWig:
 
 			request = self.build_request(environ)
 
-			handler, kwargs = self.routes.get_handler(request.method, request.path)
+			handler, kwargs = self.routes.get_route(request.method, request.path)
 			response = handler(request, **kwargs)
 			if isinstance(response.body, str):
 				response.body = [response.body.encode('utf-8')] # pylint: disable=no-member

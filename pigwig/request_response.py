@@ -5,7 +5,7 @@ import hmac
 import json
 import time
 
-from . import exceptions, reloader
+from . import exceptions
 
 class Request:
 	def __init__(self, app, method, path, query, body, cookies, wsgi_environ):
