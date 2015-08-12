@@ -15,16 +15,41 @@ from .templates_jinja import JinjaTemplateEngine
 
 class PigWig:
 	'''
-		main WSGI entrypoint. this is a class but defines a ``__call__`` so it can be passed
-		directly to WSGI servers.
+		main WSGI entrypoint. this is a class but defines a :func:`.__call__` so instances of it can
+		be passed directly to WSGI servers.
+
+		:type routes: list or function
+		:param routes: a list of 3-tuples: ``(method, path, handler)`` or a function that returns
+		  such a list
+		   * ``method`` is the HTTP method/verb (``GET``, ``POST``, etc.)
+		   * ``path`` can either be a static path (``/foo/bar``) or have params (``/post/<id>``). params
+		     are passed to the handler as keyword arguments. params cannot be optional, but you can map
+		     two routes to a handler that takes an optional argument. params must make up the entire
+		     path segment - you cannot have ``/post_<id>``.
+		   * ``handler`` is a function taking a ``request`` positional argument and any number of param
+		     keyword arguments
+		  having two identical static routes or two overlapping param segments (``/foo/<bar>`` and
+		  ``/foo/<baz>``) with the same method raises an :class:`.exceptions.RouteConflict`
+
+		:type template_dir: str
+		:param template_dir: if specified, a ``template_engine`` is created with this as the argument.
+		  for ``pigwig.templates_jinja.JinjaTemplateEngine``, this should be an absolute path or it
+		  will be relative to the current working directory.
+
+		:param template_engine: a class that takes a ``template_dir`` in the constructor and has a
+		  ``.stream`` method that takes ``template_name, context`` as arguments (passed from user
+		  code - for jinja2, context is a dictionary)
+
+		:type cookie_secret: str
+		:param cookie_secret: app-wide secret used for signing secure cookies. see
+		  :func:`Request.get_secure_cookie`
 
 		has the following instance attrs:
 
-		* ``routes`` - an internal representation of the route tree
-		* ``template_engine`` - a class that takes a ``template_dir`` in the constructor and has a
-		  ``.stream`` method that takes ``template_name, context`` as arguments (passed from user
-		  code - for jinja2, context is a dictionary)
-		* ``cookie_secret`` - app-wide secret used for signing secure cookies. see :func:`pigwig.Request.get_secure_cookie`
+		* ``routes`` - an internal representation of the route tree - not the list passed to the
+		  constructor
+		* ``template_engine``
+		* ``cookie_secret``
 	'''
 
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine, cookie_secret=None):
@@ -39,7 +64,8 @@ class PigWig:
 
 		self.cookie_secret = cookie_secret
 
-	def __call__(self, environ, start_response): # main WSGI entrypoint
+	def __call__(self, environ, start_response):
+		''' main WSGI entrypoint '''
 		try:
 			if environ['REQUEST_METHOD'] == 'OPTIONS':
 				start_response('200 OK', copy.copy(Response.DEFAULT_HEADERS))

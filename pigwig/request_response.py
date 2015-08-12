@@ -15,11 +15,12 @@ class Request:
 	* ``method`` - the request method/verb (``GET``, ``POST``, etc.)
 	* ``path`` - WSGI environ ``PATH_INFO`` (``/foo/bar``)
 	* ``query`` - dict of parsed query string. duplicate keys appear as lists
-	* ``body`` - dict of parsed body content. see :attr:`pigwig.PigWig.content_handlers` for a list
+	* ``body`` - dict of parsed body content. see :attr:`PigWig.content_handlers` for a list
 	  of supported content types
 	* ``cookies`` - an instance of
 	  `http.cookies.SimpleCookie <https://docs.python.org/3/library/http.cookies.html#http.cookies.SimpleCookie>`_
-	* ``wsgi_environ`` - the raw WSGI environ handed down from the server
+	* ``wsgi_environ`` - the raw `WSGI environ <https://www.python.org/dev/peps/pep-0333/#environ-variables>`_
+	  handed down from the server
 	'''
 
 	def __init__(self, app, method, path, query, body, cookies, wsgi_environ):
@@ -33,7 +34,7 @@ class Request:
 
 	def get_secure_cookie(self, key, max_time):
 		'''
-		decode and verify a cookie set with :func:`pigwig.Response.set_secure_cookie`
+		decode and verify a cookie set with :func:`Response.set_secure_cookie`
 
 		:param key: ``key`` passed to ``set_secure_cookie``
 		:type max_time: `datetime.timedelta <https://docs.python.org/3/library/datetime.html#timedelta-objects>`_
@@ -93,7 +94,7 @@ class Response:
 
 	def set_cookie(self, key, value, domain=None, path=None, expires=None, max_age=None, secure=False, http_only=False):
 		'''
-		adds a Set-Cookie header.
+		adds a Set-Cookie header
 
 		:type expires: datetime.datetime
 		:param expires: if set to a value in the past, the cookie is deleted. if this and ``max_age`` are
@@ -122,8 +123,17 @@ class Response:
 
 	def set_secure_cookie(self, request, key, value, **kwargs):
 		'''
-		same as :func:`.set_cookie` but stores a timestamp and a signature based on
-		``request.app.cookie_secret``. decode with :func:`pigwig.Request.get_secure_cookie`.
+		this function accepts the same keyword arguments as :func:`.set_cookie` but stores a
+		timestamp and a signature based on ``request.app.cookie_secret``. decode with
+		:func:`Request.get_secure_cookie`.
+
+		the signature is a SHA-256
+		`hashlib.pbkdf2_hmac <https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac>`_
+		of the value and the timestamp at 100,000 rounds. the value is *not* encrypted and is
+		readable by the user, but is signed and tamper-proof (assuming the ``cookie_secret`` is
+		secure). because we store the signing time, expiry is checked with ``get_secure_cookie``.
+		you generally will want to pass this function a ``max_age`` equal to ``max_time`` used when
+		reading the cookie.
 		'''
 		ts = int(time.time())
 		value_ts = '%s|%s' % (value, ts)
@@ -136,7 +146,7 @@ class Response:
 		'''
 		generate a streaming :class:`.Response` object from an object with an ``application/json``
 		content type. the default :attr:`.json_encoder` indents with tabs - override if you want
-		different indentation or need special encoding
+		different indentation or need special encoding.
 		'''
 		body = cls._gen_json(obj)
 		return Response(body, content_type='application/json')

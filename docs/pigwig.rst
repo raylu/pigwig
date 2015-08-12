@@ -1,5 +1,7 @@
 PigWig
 ======
 
+.. py:module:: pigwig
+
 .. autoclass:: pigwig.PigWig
-   :members:
+   :special-members: __call__
