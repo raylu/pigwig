@@ -1,0 +1,8 @@
+{% extends 'base.jinja2' %}
+
+{% block body %}
+	<a href="/">back</a>
+	<h2>{{ post['title'] }}</h2>
+	by {{ post['username'] }}
+	<blockquote>{{ post['body'] }}</blockquote>
+{% endblock body %}

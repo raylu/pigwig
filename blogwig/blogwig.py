@@ -24,6 +24,7 @@ LOGIN_TIME = datetime.timedelta(days=30)
 def routes():
 	return [
 		('GET', '/', root),
+		('GET', '/post/<id>', post),
 		('GET', '/login', login_form),
 		('POST', '/login', login),
 		('GET', '/admin', admin),
@@ -42,6 +43,18 @@ def root(request):
 		logged_in = True
 
 	return Response.render(request, 'root.jinja2', {'posts': posts, 'logged_in': logged_in})
+
+def post(request, id):
+	posts = db.execute('''
+		SELECT users.username, posts.title, posts.body
+		FROM posts JOIN users on posts.user_id = users.id
+		WHERE posts.id = ?
+	''', id)
+	try:
+		post = next(posts)
+	except StopIteration:
+		raise HTTPException(404, 'invalid post id')
+	return Response.render(request, 'post.jinja2', {'post': post})
 
 def login_form(request):
 	return Response.render(request, 'login.jinja2', {})
