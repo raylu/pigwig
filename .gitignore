@@ -1,5 +1,6 @@
 __pycache__/
 /blogwig/blogwig.db
+/docs/_build/
 
 /pigwig.egg-info/
 /build/

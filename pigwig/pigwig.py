@@ -14,6 +14,19 @@ from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
 class PigWig:
+	'''
+		main WSGI entrypoint. this is a class but defines a ``__call__`` so it can be passed
+		directly to WSGI servers.
+
+		has the following instance attrs:
+
+		* ``routes`` - an internal representation of the route tree
+		* ``template_engine`` - a class that takes a ``template_dir`` in the constructor and has a
+		  ``.stream`` method that takes ``template_name, context`` as arguments (passed from user
+		  code - for jinja2, context is a dictionary)
+		* ``cookie_secret`` - app-wide secret used for signing secure cookies. see :func:`pigwig.Request.get_secure_cookie`
+	'''
+
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine, cookie_secret=None):
 		if callable(routes):
 			routes = routes()
@@ -57,6 +70,7 @@ class PigWig:
 			return [tb.encode('utf-8', 'replace')]
 
 	def build_request(self, environ):
+		''' builds :class:`.Response` objects. for internal use. '''
 		method = environ['REQUEST_METHOD']
 		path = environ['PATH_INFO']
 
@@ -84,6 +98,11 @@ class PigWig:
 		return Request(self, method, path, query, body, cookies, environ)
 
 	def main(self, host='0.0.0.0', port=8000):
+		'''
+		sets up the autoreloader and runs a
+		`wsgiref.simple_server <https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server>`_.
+		useful for development.
+		'''
 		reloader.init()
 		if len(sys.argv) == 2:
 			port = int(sys.argv[1])
