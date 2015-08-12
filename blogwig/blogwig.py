@@ -14,6 +14,7 @@ from pigwig import PigWig, Response
 from pigwig.exceptions import HTTPException
 
 blogwig_dir = path.normpath(path.dirname(path.abspath(__file__)))
+template_dir = path.join(blogwig_dir, 'templates')
 db_path = path.join(blogwig_dir, 'blogwig.db')
 db = sqlite3.connect(db_path)
 db.row_factory = sqlite3.Row
@@ -118,7 +119,7 @@ def _hash(username, password, salt):
 	dk = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
 	return binascii.hexlify(dk)
 
-app = PigWig(routes, template_dir='templates', cookie_secret=b'this is super secret')
+app = PigWig(routes, template_dir=template_dir, cookie_secret=b'this is super secret')
 
 def main():
 	try:

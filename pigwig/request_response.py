@@ -91,7 +91,7 @@ class Response:
 
 	@classmethod
 	def render(cls, request, template, context):
-		body = request.app.template_engine.render(template, context)
+		body = request.app.template_engine.stream(template, context)
 		response = cls(body, content_type='text/html')
 		return response
 
