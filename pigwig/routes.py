@@ -62,7 +62,7 @@ class RouteNode:
 		rval = []
 		for method, handler in self.method_handlers.items():
 			rval.append('%s: %s,' % (method, handler))
-		for element, node in self.items():
+		for element, node in self.static_children.items():
 			rval.append('%r: %s' % (element, node))
 		if self.param_name:
 			rval.append('%s: %s' % (self.param_name, self.param_children))
