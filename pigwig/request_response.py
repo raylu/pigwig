@@ -1,7 +1,7 @@
-import binascii
 import copy
 import hashlib
 import hmac
+import http.cookies
 import json
 import time
 
@@ -52,8 +52,8 @@ class Request:
 			ts = int(ts)
 		except ValueError:
 			raise exceptions.HTTPException(400, 'invalid %s cookie: %s' % (key, cookie))
-		value_ts = '%s|%s' % (value, int(ts))
-		if hmac.compare_digest(signature, _hash(value_ts, self.app.cookie_secret)):
+		value_ts = '%s|%d' % (value, int(ts))
+		if hmac.compare_digest(signature, _hash(key + '|' + value_ts, self.app.cookie_secret)):
 			if max_time is not None and ts + max_time.total_seconds() < time.time(): # cookie has expired
 				return None
 			return value
@@ -67,10 +67,17 @@ class Response:
 	:param body: if ``None``, the response body is empty.
 	  if a ``str``, the response body is UTF-8 encoded.
 	  if a generator, the response streams the yielded bytes.
+	:type code: int
 	:param code: HTTP status code; the "reason phrase" is generated automatically from
 	  `http.client.responses <https://docs.python.org/3/library/http.client.html#http.client.responses>`_
 	:param content_type: sets the Content-Type header
-	:param location: if not ``None``, sets the Location header
+	:param location: if not ``None``, sets the Location header. you must still specify a 3xx code
+
+	has the following instance attrs:
+
+	* ``code``
+	* ``body``
+	* ``headers`` - a list of 2-tuples
 	'''
 
 	BASE_HEADERS = [
@@ -81,6 +88,7 @@ class Response:
 	ERROR_HEADERS = BASE_HEADERS + [('Content-type', 'text/plain')]
 
 	json_encoder = json.JSONEncoder(indent='\t')
+	simple_cookie = http.cookies.SimpleCookie()
 
 	def __init__(self, body=None, code=200, content_type='text/plain', location=None):
 		self.body = body
@@ -105,7 +113,7 @@ class Response:
 
 		see `the docs <https://tools.ietf.org/html/rfc6265#section-4.1>`_ for an explanation of the other params
 		'''
-		cookie = '%s=%s' % (key, value)
+		cookie = '%s=%s' % (key, self.simple_cookie.value_encode(value)[1])
 		if domain:
 			cookie += '; Domain=%s' % domain
 		if path:
@@ -127,17 +135,15 @@ class Response:
 		timestamp and a signature based on ``request.app.cookie_secret``. decode with
 		:func:`Request.get_secure_cookie`.
 
-		the signature is a SHA-256
-		`hashlib.pbkdf2_hmac <https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac>`_
-		of the value and the timestamp at 100,000 rounds. the value is *not* encrypted and is
-		readable by the user, but is signed and tamper-proof (assuming the ``cookie_secret`` is
-		secure). because we store the signing time, expiry is checked with ``get_secure_cookie``.
-		you generally will want to pass this function a ``max_age`` equal to ``max_time`` used when
-		reading the cookie.
+		the signature is a SHA-256 `hmac <https://docs.python.org/3/library/hmac.html>`_ of the
+		key, value, and timestamp. the value is *not* encrypted and is readable by the user, but is
+		signed and tamper-proof (assuming the ``cookie_secret`` is secure). because we store the
+		signing time, expiry is checked with ``get_secure_cookie``. you generally will want to pass
+		this function a ``max_age`` equal to ``max_time`` used when reading the cookie.
 		'''
 		ts = int(time.time())
 		value_ts = '%s|%s' % (value, ts)
-		signature = _hash(value_ts, request.app.cookie_secret)
+		signature = _hash(key + '|' + value_ts, request.app.cookie_secret)
 		value_signed = '%s|%s' % (value_ts, signature)
 		self.set_cookie(key, value_signed, **kwargs)
 
@@ -179,6 +185,6 @@ class Response:
 		return response
 
 def _hash(value_ts, cookie_secret):
-	dk = hashlib.pbkdf2_hmac('sha256', value_ts.encode(), cookie_secret, 100000)
-	signature = binascii.hexlify(dk)
-	return signature.decode()
+	h = hmac.new(cookie_secret, value_ts.encode(), hashlib.sha256)
+	signature = h.hexdigest()
+	return signature
