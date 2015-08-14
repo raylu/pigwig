@@ -38,9 +38,11 @@ class Request:
 
 		:param key: ``key`` passed to ``set_secure_cookie``
 		:type max_time: `datetime.timedelta <https://docs.python.org/3/library/datetime.html#timedelta-objects>`_
+		  or None
 		:param max_time: amount of time since cookie was set that it should be considered valid for.
 		  this is normally equal to the ``max_age`` passed to ``set_secure_cookie``. longer times mean
-		  larger windows during which a replay attack is valid.
+		  larger windows during which a replay attack is valid. this can be None, in which case no
+		  expiry check is performed
 		:rtype: str or None
 		'''
 		try:
@@ -48,7 +50,7 @@ class Request:
 		except KeyError:
 			return None
 		try:
-			value, ts, signature = cookie.split('|', 3)
+			value, ts, signature = cookie.rsplit('|', 2)
 			ts = int(ts)
 		except ValueError:
 			raise exceptions.HTTPException(400, 'invalid %s cookie: %s' % (key, cookie))
