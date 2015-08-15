@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
+	'sphinx.ext.autodoc',
+	'sphinx.ext.linkcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -82,6 +82,21 @@ pygments_style = 'sphinx'
 
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['show-inheritance', 'members', 'undoc-members', 'private-members']
+
+# -- linkcode
+
+def linkcode_resolve(domain, info):
+	if domain != 'py' or not info['module']:
+		return None
+	module = info['module']
+	fullname = info['fullname']
+	if module == 'pigwig':
+		import pigwig
+		module = getattr(pigwig, fullname.split('.')[0]).__module__
+	module = module.replace('.', '/')
+	fullname = fullname.replace('.', '/')
+	base_url = 'https://sourcegraph.com/github.com/raylu/pigwig@master/.PipPackage/pigwig/.def/'
+	return base_url + '%s/%s' % (module, fullname)
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -174,8 +189,7 @@ htmlhelp_basename = 'pigwigdoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pigwig', 'pigwig Documentation',
-     ['raylu', 'jmw327'], 1)
+	('index', 'pigwig', 'pigwig Documentation', ['raylu', 'jmw327'], 1)
 ]
 
 # If true, show URL addresses after external links.

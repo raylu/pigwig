@@ -80,7 +80,7 @@ class PigWig:
 			elif response.body is None:
 				response.body = []
 			elif not isgenerator(response.body):
-				raise Exception(500, 'unhandled view response type: %s' % type(response.body))
+				raise Exception('unhandled view response type: %s' % type(response.body))
 
 			status_line = '%d %s' % (response.code, http.client.responses[response.code])
 			start_response(status_line, response.headers)
