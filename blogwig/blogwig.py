@@ -67,7 +67,7 @@ def login(request):
 		raise HTTPException(400, 'username or password missing')
 	cur = db.execute('SELECT id, password, salt FROM users WHERE username = ?', (username,))
 	user = next(cur)
-	hashed = _hash(username, password, user['salt'])
+	hashed = _hash(password, user['salt'])
 	if hmac.compare_digest(user['password'], hashed):
 		response = Response(code=303, location='/admin')
 		response.set_secure_cookie(request, 'user_id', str(user['id']), max_age=LOGIN_TIME)
@@ -124,11 +124,11 @@ def init_db():
 
 def create_user(username, password):
 	salt = os.urandom(16)
-	hashed = _hash(username, password, salt)
+	hashed = _hash(password, salt)
 	db.execute('INSERT INTO users (username, password, salt) VALUES(?, ?, ?)',
 			(username, hashed, salt))
 
-def _hash(username, password, salt):
+def _hash(password, salt):
 	dk = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
 	return binascii.hexlify(dk)
 
