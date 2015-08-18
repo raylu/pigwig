@@ -1,4 +1,5 @@
 import copy
+import enum
 import http.client
 import http.cookies
 from inspect import isgenerator
@@ -112,9 +113,11 @@ class PigWig:
 		body = (environ['wsgi.input'], content_length)
 		content_type = environ.get('CONTENT_TYPE')
 		if content_type:
-			handler = self.content_handlers.get(content_type)
+			media_type, *raw_params = content_type.split('; ')
+			params = parse_header_params(raw_params)
+			handler = self.content_handlers.get(media_type)
 			if handler:
-				body = handler(environ['wsgi.input'], content_length)
+				body = handler(environ['wsgi.input'], content_length, params)
 
 		cookies = http.cookies.SimpleCookie()
 		http_cookie = environ.get('HTTP_COOKIE')
@@ -137,16 +140,71 @@ class PigWig:
 		server.serve_forever()
 
 	@staticmethod
-	def handle_urlencoded(body, length):
+	def handle_urlencoded(body, length, params):
 		return parse_qs(body.read(length).decode('utf-8'))
 
 	@staticmethod
-	def handle_json(body, length):
+	def handle_json(body, length, params):
 		return json.loads(body.read(length).decode('utf-8'))
+
+	@staticmethod
+	def handle_multipart(body, length, params):
+		class State(enum.IntEnum):
+			boundary = 1
+			header = 2
+			end_headers = 3
+			content = 4
+			end = 5
+		# The Content-Type field for multipart entities requires one parameter,
+		# "boundary". The boundary delimiter line is then defined as a line
+		# consisting entirely of two hyphen characters ("-", decimal value 45)
+		# followed by the boundary parameter value from the Content-Type header
+		# field, optional linear whitespace, and a terminating CRLF.
+		boundary = b'--' + params['boundary'].encode()
+		buf = body.read(length)
+		split = buf.split(b'\r\n')
+
+		form = {}
+		state = name = None
+		for line in split:
+			# state transitions
+			if state is None:
+				if line != boundary:
+					raise ValueError(line)
+				state = State.boundary
+			elif state == State.boundary:
+				state = State.header
+			elif state == State.header:
+				if not line:
+					state = State.end_headers
+			elif state == State.end_headers:
+				state = State.content
+			elif state == State.content:
+				if line == boundary:
+					state = State.boundary
+				elif line == boundary + b'--':
+					state = State.end
+			elif state == State.end:
+				if line:
+					raise ValueError(line)
+				break
+
+			# parsing
+			if state == State.header:
+				header, value = line.decode().split(': ', 1)
+				if header.casefold() == 'content-disposition':
+					disposition, *raw_params = value.split('; ')
+					params = parse_header_params(raw_params)
+					name = params['name']
+					form[name] = b''
+			elif state == State.content:
+				form[name] += line
+		return form
 
 PigWig.content_handlers = {
 	'application/json': PigWig.handle_json,
 	'application/x-www-form-urlencoded': PigWig.handle_urlencoded,
+	'multipart/form-data': PigWig.handle_multipart,
 }
 
 def parse_qs(qs):
@@ -155,3 +213,10 @@ def parse_qs(qs):
 		if len(v) == 1:
 			parsed[k] = v[0]
 	return parsed
+
+def parse_header_params(raw_params):
+	params = {}
+	for raw_param in raw_params:
+		attr, value = raw_param.split('=', 1)
+		params[attr] = value.strip('"') # TODO: actually handle quoted strings with ';' and '='
+	return params
