@@ -140,11 +140,13 @@ class PigWig:
 
 	@staticmethod
 	def handle_urlencoded(body, length, params):
-		return parse_qs(body.read(length).decode('utf-8'))
+		charset = params.get('charset', 'utf-8')
+		return parse_qs(body.read(length).decode(charset))
 
 	@staticmethod
 	def handle_json(body, length, params):
-		return json.loads(body.read(length).decode('utf-8'))
+		charset = params.get('charset', 'utf-8')
+		return json.loads(body.read(length).decode(charset))
 
 	@staticmethod
 	def handle_multipart(body, length, params):

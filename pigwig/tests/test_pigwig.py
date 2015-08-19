@@ -34,6 +34,11 @@ class PigWigTests(unittest.TestCase):
 		req = app.build_request(environ)
 		self.assertEqual(req.body, {'a': '1', 'b': ['2', '3']})
 
+		environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded; charset=latin1'
+		environ['wsgi.input'] = io.BytesIO('a=Ï'.encode('latin-1')) # capital I with diaresis, 0xCF in latin-1
+		req = app.build_request(environ)
+		self.assertEqual(req.body, {'a': 'Ï'})
+
 		environ['CONTENT_TYPE'] = 'multipart/form-data; boundary=boundary'
 		environ['wsgi.input'] = io.BytesIO(textwrap.dedent('''\
 		--boundary
