@@ -1,3 +1,4 @@
+import cgi
 import copy
 import http.client
 import http.cookies
@@ -112,9 +113,10 @@ class PigWig:
 		body = (environ['wsgi.input'], content_length)
 		content_type = environ.get('CONTENT_TYPE')
 		if content_type:
-			handler = self.content_handlers.get(content_type)
+			media_type, params = cgi.parse_header(content_type)
+			handler = self.content_handlers.get(media_type)
 			if handler:
-				body = handler(environ['wsgi.input'], content_length)
+				body = handler(environ['wsgi.input'], content_length, params)
 
 		cookies = http.cookies.SimpleCookie()
 		http_cookie = environ.get('HTTP_COOKIE')
@@ -137,16 +139,26 @@ class PigWig:
 		server.serve_forever()
 
 	@staticmethod
-	def handle_urlencoded(body, length):
+	def handle_urlencoded(body, length, params):
 		return parse_qs(body.read(length).decode('utf-8'))
 
 	@staticmethod
-	def handle_json(body, length):
+	def handle_json(body, length, params):
 		return json.loads(body.read(length).decode('utf-8'))
+
+	@staticmethod
+	def handle_multipart(body, length, params):
+		params['boundary'] = params['boundary'].encode()
+		form = cgi.parse_multipart(body, params)
+		for k, v in form.items():
+			if len(v) == 1:
+				form[k] = v[0]
+		return form
 
 PigWig.content_handlers = {
 	'application/json': PigWig.handle_json,
 	'application/x-www-form-urlencoded': PigWig.handle_urlencoded,
+	'multipart/form-data': PigWig.handle_multipart,
 }
 
 def parse_qs(qs):
