@@ -1,3 +1,4 @@
+from collections import UserDict
 import copy
 import hashlib
 import hmac
@@ -15,6 +16,7 @@ class Request:
 	* ``method`` - the request method/verb (``GET``, ``POST``, etc.)
 	* ``path`` - WSGI environ ``PATH_INFO`` (``/foo/bar``)
 	* ``query`` - dict of parsed query string. duplicate keys appear as lists
+	* ``headers`` - :class:`.HTTPHeaders` of the headers
 	* ``body`` - dict of parsed body content. see :attr:`PigWig.content_handlers` for a list
 	  of supported content types
 	* ``cookies`` - an instance of
@@ -23,11 +25,12 @@ class Request:
 	  handed down from the server
 	'''
 
-	def __init__(self, app, method, path, query, body, cookies, wsgi_environ):
+	def __init__(self, app, method, path, query, headers, body, cookies, wsgi_environ):
 		self.app = app
 		self.method = method
 		self.path = path
 		self.query = query
+		self.headers = headers
 		self.body = body
 		self.cookies = cookies
 		self.wsgi_environ = wsgi_environ
@@ -190,3 +193,15 @@ def _hash(value_ts, cookie_secret):
 	h = hmac.new(cookie_secret, value_ts.encode(), hashlib.sha256)
 	signature = h.hexdigest()
 	return signature
+
+class HTTPHeaders(UserDict): # inherit so that __init__ and fromkeys work (even though we never use them)
+	'''
+	behaves like a regular :class:`dict` but
+	`casefolds <https://docs.python.org/3/library/stdtypes.html#str.casefold>`_ the keys
+	'''
+
+	def __setitem__(self, key, value):
+		self.data[key.casefold()] = value
+
+	def __getitem__(self, key):
+		return self.data[key.casefold()]

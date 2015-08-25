@@ -10,7 +10,7 @@ import urllib.parse
 import wsgiref.simple_server
 
 from . import exceptions, reloader
-from .request_response import Request, Response
+from .request_response import HTTPHeaders, Request, Response
 from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
@@ -107,12 +107,16 @@ class PigWig:
 		else:
 			query = {}
 
+		headers = HTTPHeaders()
+
 		content_length = environ.get('CONTENT_LENGTH')
 		if content_length:
+			headers['Content-Length'] = content_length
 			content_length = int(content_length)
 		body = (environ['wsgi.input'], content_length)
 		content_type = environ.get('CONTENT_TYPE')
 		if content_type:
+			headers['Content-Type'] = content_type
 			media_type, params = cgi.parse_header(content_type)
 			handler = self.content_handlers.get(media_type)
 			if handler:
@@ -123,7 +127,11 @@ class PigWig:
 		if http_cookie:
 			cookies.load(http_cookie)
 
-		return Request(self, method, path, query, body, cookies, environ)
+		for key in environ:
+			if key.startswith('HTTP_'):
+				headers[key[5:].replace('_', '-')] = environ[key]
+
+		return Request(self, method, path, query, headers, body, cookies, environ)
 
 	def main(self, host='0.0.0.0', port=8000):
 		'''
