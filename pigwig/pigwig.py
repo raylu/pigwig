@@ -9,10 +9,15 @@ import traceback
 import urllib.parse
 import wsgiref.simple_server
 
-from . import exceptions, reloader
+from . import exceptions
 from .request_response import HTTPHeaders, Request, Response
 from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
+
+if sys.platform == "darwin":
+	from . import osx_reloader as reloader
+else:
+	from . import reloader
 
 class PigWig:
 	'''
