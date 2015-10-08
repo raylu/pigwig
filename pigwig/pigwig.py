@@ -15,9 +15,9 @@ from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
 if sys.platform == "darwin":
-	from . import osx_reloader as reloader
+	from . import reloader_osx as reloader
 else:
-	from . import reloader
+	from . import reloader_linux as reloader
 
 class PigWig:
 	'''
