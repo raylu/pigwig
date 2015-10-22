@@ -14,11 +14,6 @@ from .request_response import HTTPHeaders, Request, Response
 from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
-if sys.platform == "darwin":
-	from . import reloader_osx as reloader
-else:
-	from . import reloader_linux as reloader
-
 class PigWig:
 	'''
 		main WSGI entrypoint. this is a class but defines a :func:`.__call__` so instances of it can
@@ -144,7 +139,22 @@ class PigWig:
 		`wsgiref.simple_server <https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server>`_.
 		useful for development.
 		'''
-		reloader.init()
+
+		have_reloader = True
+		if sys.platform == 'linux':
+			from . import reloader_linux as reloader
+		elif sys.platform == 'darwin':
+			try:
+				from . import reloader_osx as reloader
+			except ImportError as e:
+				have_reloader = False
+				print('install', e.name, 'for auto-reloading')
+		else:
+			have_reloader = False
+			print('no reloader available for', sys.platform)
+		if have_reloader:
+			reloader.init()
+
 		if len(sys.argv) == 2:
 			port = int(sys.argv[1])
 		server = wsgiref.simple_server.make_server(host, port, self)
