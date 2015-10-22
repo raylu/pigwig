@@ -30,7 +30,8 @@ pigwig has no hard dependencies, but
 1. if you want to use templating, you must either install `jinja2 <http://jinja.pocoo.org/docs>`_
    or provide your own template engine
 2. if you want to use :func:`PigWig.main` for development, the reloader requires a libc that
-   supports inotify (linux 2.6.13 and glibc 2.4 or later)
+   supports inotify (linux 2.6.13 and glibc 2.4 or later) or the
+   `macfsevents <https://github.com/malthe/macfsevents>`_ package on OS X
 3. you will want a "real" WSGI server to deploy on such as
    `eventlet <http://eventlet.net/doc/modules/wsgi.html>`_ or `gunicorn <http://gunicorn.org/#quickstart>`_
 
