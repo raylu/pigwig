@@ -4,6 +4,8 @@ import textwrap
 import unittest
 
 from pigwig import PigWig
+from pigwig.exceptions import HTTPException
+from pigwig.pigwig import parse_qs
 
 class PigWigTests(unittest.TestCase):
 	def test_build_request(self):
@@ -58,3 +60,11 @@ class PigWigTests(unittest.TestCase):
 		''').encode())
 		req = app.build_request(environ)
 		self.assertEqual(req.body, {'a': [b'1', b'2'], 'file1': b'blah blah blah'})
+
+	def test_parse_qs(self):
+		r = parse_qs('a=1&b=2')
+		self.assertEqual(r, {'a': '1', 'b': '2'})
+
+		self.assertRaises(HTTPException, parse_qs, 'a=1&b')
+
+		self.assertRaises(HTTPException, parse_qs, 'a=%80')

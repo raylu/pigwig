@@ -187,7 +187,15 @@ PigWig.content_handlers = {
 }
 
 def parse_qs(qs):
-	parsed = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True, errors='strict')
+	try:
+		parsed = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True, errors='strict')
+	except UnicodeDecodeError as e:
+		qs_trunc = qs
+		if len(qs_trunc) > 24:
+			qs_trunc = qs_trunc[:24] + '...'
+		raise exceptions.HTTPException(400, '%s\n%r' % (e, qs_trunc)) # "'utf-8' codec can't decode byte ..."
+	except ValueError as e:
+		raise exceptions.HTTPException(400, e.args[0]) # "bad query field: ..."
 	for k, v in parsed.items():
 		if len(v) == 1:
 			parsed[k] = v[0]
