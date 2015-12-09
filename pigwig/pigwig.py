@@ -5,6 +5,7 @@ import http.cookies
 from inspect import isgenerator
 import json
 import sys
+import textwrap
 import traceback
 import urllib.parse
 import wsgiref.simple_server
@@ -67,6 +68,7 @@ class PigWig:
 
 	def __call__(self, environ, start_response):
 		''' main WSGI entrypoint '''
+		errors = environ.get('wsgi.errors', sys.stderr)
 		try:
 			if environ['REQUEST_METHOD'] == 'OPTIONS':
 				start_response('200 OK', copy.copy(Response.DEFAULT_HEADERS))
@@ -87,12 +89,13 @@ class PigWig:
 			start_response(status_line, response.headers)
 			return response.body
 		except exceptions.HTTPException as e:
+			errors.write(textwrap.indent(e.body + '\n', '\t'))
 			status_line = '%d %s' % (e.code, http.client.responses[e.code])
 			start_response(status_line, copy.copy(Response.ERROR_HEADERS))
 			return [e.body.encode('utf-8', 'replace')]
 		except:
 			tb = traceback.format_exc()
-			sys.stderr.write(tb)
+			errors.write(tb)
 			start_response('500 Internal Server Error', copy.copy(Response.ERROR_HEADERS))
 			return [tb.encode('utf-8', 'replace')]
 
