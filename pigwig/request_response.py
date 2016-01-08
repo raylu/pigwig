@@ -160,7 +160,7 @@ class Response:
 		different indentation or need special encoding.
 		'''
 		body = cls._gen_json(obj)
-		return Response(body, content_type='application/json')
+		return Response(body, content_type='application/json; charset=utf-8')
 
 	@classmethod
 	def _gen_json(cls, obj):
@@ -186,7 +186,7 @@ class Response:
 
 		'''
 		body = request.app.template_engine.stream(template, context)
-		response = cls(body, content_type='text/html')
+		response = cls(body, content_type='text/html; charset=utf-8')
 		return response
 
 def _hash(value_ts, cookie_secret):

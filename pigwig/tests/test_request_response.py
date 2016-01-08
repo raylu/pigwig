@@ -9,6 +9,7 @@ class ResponseTests(unittest.TestCase):
 	def test_json(self):
 		r = Response.json(None)
 		self.assertEqual(next(r.body), b'null')
+		self.assertEqual(HTTPHeaders(r.headers)['Content-Type'], 'application/json; charset=utf-8')
 
 		big_obj = ['a' * 256] * 256
 		r = Response.json(big_obj)
