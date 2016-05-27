@@ -15,6 +15,15 @@ from .request_response import HTTPHeaders, Request, Response
 from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
+def default_http_exception_handler(e, errors, request, app):
+	errors.write(textwrap.indent(e.body + '\n', '\t'))
+	return Response(e.body.encode('utf-8', 'replace'), e.code)
+
+def default_exception_handler(e, errors, request, app):
+	tb = traceback.format_exc()
+	errors.write(tb)
+	return Response(tb.encode('utf-8', 'replace'), 500)
+
 class PigWig:
 	'''
 		main WSGI entrypoint. this is a class but defines a :func:`.__call__` so instances of it can
@@ -54,7 +63,9 @@ class PigWig:
 		* ``cookie_secret``
 	'''
 
-	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine, cookie_secret=None):
+	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine,
+			cookie_secret=None, http_exception_handler=default_http_exception_handler,
+			exception_handler=default_exception_handler):
 		if callable(routes):
 			routes = routes()
 		self.routes = build_route_tree(routes)
@@ -65,6 +76,8 @@ class PigWig:
 			self.template_engine = None
 
 		self.cookie_secret = cookie_secret
+		self.http_exception_handler = http_exception_handler
+		self.exception_handler = exception_handler
 
 	def __call__(self, environ, start_response):
 		''' main WSGI entrypoint '''
@@ -74,12 +87,22 @@ class PigWig:
 				start_response('200 OK', copy.copy(Response.DEFAULT_HEADERS))
 				return []
 
-			request = self.build_request(environ)
+			request, err = self.build_request(environ)
+			try:
+				if err:
+					raise err
 
-			handler, kwargs = self.routes.route(request.method, request.path)
-			response = handler(request, **kwargs)
+				handler, kwargs = self.routes.route(request.method, request.path)
+				response = handler(request, **kwargs)
+			except exceptions.HTTPException as e:
+				response = self.http_exception_handler(e, errors, request, self)
+			except Exception as e:
+				response = self.exception_handler(e, errors, request, self)
+
 			if isinstance(response.body, str):
 				response.body = [response.body.encode('utf-8')] # pylint: disable=no-member
+			elif isinstance(response.body, bytes):
+				response.body = [response.body]
 			elif response.body is None:
 				response.body = []
 			elif not isgenerator(response.body):
@@ -88,53 +111,49 @@ class PigWig:
 			status_line = '%d %s' % (response.code, http.client.responses[response.code])
 			start_response(status_line, response.headers)
 			return response.body
-		except exceptions.HTTPException as e:
-			errors.write(textwrap.indent(e.body + '\n', '\t'))
-			status_line = '%d %s' % (e.code, http.client.responses[e.code])
-			start_response(status_line, copy.copy(Response.ERROR_HEADERS))
-			return [e.body.encode('utf-8', 'replace')]
-		except:
-			tb = traceback.format_exc()
-			errors.write(tb)
-			start_response('500 Internal Server Error', copy.copy(Response.ERROR_HEADERS))
-			return [tb.encode('utf-8', 'replace')]
+		except: # something went very wrong handling OPTIONS, in error handling, or in sending the response
+			errors.write(traceback.format_exc())
+			start_response('500 Internal Server Error', [])
+			return [b'internal server error']
 
 	def build_request(self, environ):
 		''' builds :class:`.Response` objects. for internal use. '''
 		method = environ['REQUEST_METHOD']
 		path = environ['PATH_INFO']
-
-		qs = environ.get('QUERY_STRING')
-		if qs:
-			query = parse_qs(qs)
-		else:
-			query = {}
-
+		query = {}
 		headers = HTTPHeaders()
-
-		content_length = environ.get('CONTENT_LENGTH')
-		if content_length:
-			headers['Content-Length'] = content_length
-			content_length = int(content_length)
-		body = (environ['wsgi.input'], content_length)
-		content_type = environ.get('CONTENT_TYPE')
-		if content_type:
-			headers['Content-Type'] = content_type
-			media_type, params = cgi.parse_header(content_type)
-			handler = self.content_handlers.get(media_type)
-			if handler:
-				body = handler(environ['wsgi.input'], content_length, params)
-
 		cookies = http.cookies.SimpleCookie()
-		http_cookie = environ.get('HTTP_COOKIE')
-		if http_cookie:
-			cookies.load(http_cookie)
+		err = None
 
-		for key in environ:
-			if key.startswith('HTTP_'):
-				headers[key[5:].replace('_', '-')] = environ[key]
+		try:
+			qs = environ.get('QUERY_STRING')
+			if qs:
+				query = parse_qs(qs)
 
-		return Request(self, method, path, query, headers, body, cookies, environ)
+			content_length = environ.get('CONTENT_LENGTH')
+			if content_length:
+				headers['Content-Length'] = content_length
+				content_length = int(content_length)
+			body = (environ['wsgi.input'], content_length)
+			content_type = environ.get('CONTENT_TYPE')
+			if content_type:
+				headers['Content-Type'] = content_type
+				media_type, params = cgi.parse_header(content_type)
+				handler = self.content_handlers.get(media_type)
+				if handler:
+					body = handler(environ['wsgi.input'], content_length, params)
+
+			http_cookie = environ.get('HTTP_COOKIE')
+			if http_cookie:
+				cookies.load(http_cookie)
+
+			for key in environ:
+				if key.startswith('HTTP_'):
+					headers[key[5:].replace('_', '-')] = environ[key]
+		except Exception as e:
+			err = e
+
+		return Request(self, method, path, query, headers, body, cookies, environ), err
 
 	def main(self, host='0.0.0.0', port=8000):
 		'''

@@ -10,7 +10,7 @@ import os
 from os import path
 import sqlite3
 
-from pigwig import PigWig, Response
+from pigwig import PigWig, Response, default_http_exception_handler
 from pigwig.exceptions import HTTPException
 
 blogwig_dir = path.normpath(path.dirname(path.abspath(__file__)))
@@ -99,6 +99,11 @@ def admin_post(request, user_id):
 		db.execute('INSERT INTO posts (user_id, title, body) VALUES(?, ?, ?)', (user_id, title, body))
 	return Response(code=303, location='/admin')
 
+def http_exception_handler(e, errors, request, app):
+	if e.code == 404:
+		return Response.render(request, '404.jinja2', {})
+	return default_http_exception_handler(e, errors, request, app)
+
 def init_db():
 	print('creating blogwig.db')
 	with db:
@@ -132,7 +137,8 @@ def _hash(password, salt):
 	dk = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
 	return binascii.hexlify(dk)
 
-app = PigWig(routes, template_dir=template_dir, cookie_secret=b'this is super secret')
+app = PigWig(routes, template_dir=template_dir, cookie_secret=b'this is super secret',
+		http_exception_handler=http_exception_handler)
 
 def main():
 	try:

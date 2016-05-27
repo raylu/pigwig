@@ -79,7 +79,7 @@ comment=no
 # all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED
 confidence=
 enable=
-disable=missing-docstring,invalid-name,bad-continuation,unused-argument,import-error,too-many-locals,redefined-builtin,pointless-string-statement,too-many-branches,undefined-loop-variable,bare-except,protected-access,broad-except,global-statement,no-self-use,too-few-public-methods,no-init
+disable=missing-docstring,invalid-name,bad-continuation,unused-argument,import-error,too-many-locals,redefined-builtin,pointless-string-statement,too-many-branches,undefined-loop-variable,bare-except,protected-access,broad-except,global-statement,no-self-use,too-few-public-methods,no-init,too-many-instance-attributes
 
 
 [TYPECHECK]

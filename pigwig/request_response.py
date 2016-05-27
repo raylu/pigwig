@@ -77,6 +77,7 @@ class Response:
 	  `http.client.responses <https://docs.python.org/3/library/http.client.html#http.client.responses>`_
 	:param content_type: sets the Content-Type header
 	:param location: if not ``None``, sets the Location header. you must still specify a 3xx code
+	:param extra_headers: if not ``None``, an iterable of extra header 2-tuples to be sent
 
 	has the following instance attrs:
 
@@ -85,17 +86,15 @@ class Response:
 	* ``headers`` - a list of 2-tuples
 	'''
 
-	BASE_HEADERS = [
+	DEFAULT_HEADERS = [
 		('Access-Control-Allow-Origin', '*'),
 		('Access-Control-Allow-Headers', 'Authorization, X-Requested-With, X-Request'),
 	]
-	DEFAULT_HEADERS = BASE_HEADERS
-	ERROR_HEADERS = BASE_HEADERS + [('Content-type', 'text/plain')]
 
 	json_encoder = json.JSONEncoder(indent='\t')
 	simple_cookie = http.cookies.SimpleCookie()
 
-	def __init__(self, body=None, code=200, content_type='text/plain', location=None):
+	def __init__(self, body=None, code=200, content_type='text/plain', location=None, extra_headers=None):
 		self.body = body
 		self.code = code
 
@@ -103,6 +102,8 @@ class Response:
 		headers.append(('Content-Type', content_type))
 		if location:
 			headers.append(('Location', location))
+		if extra_headers:
+			headers.extend(extra_headers)
 		self.headers = headers
 
 	def set_cookie(self, key, value, domain=None, path=None, expires=None, max_age=None, secure=False, http_only=False):
