@@ -2,6 +2,7 @@ import io
 import math
 import textwrap
 import unittest
+from unittest import mock
 
 from pigwig import PigWig
 from pigwig.exceptions import HTTPException
@@ -16,29 +17,34 @@ class PigWigTests(unittest.TestCase):
 			'HTTP_COOKIE': 'a=1; a="2"',
 			'wsgi.input': None,
 		}
-		req = app.build_request(environ)
+		req, err = app.build_request(environ)
+		self.assertIsNone(err)
 		self.assertEqual(req.method, 'test method')
 		self.assertEqual(req.path, 'test path?a=1&b=2&b=3')
 		self.assertEqual(req.query, {})
 		self.assertEqual(req.cookies['a'].value, '2')
 
 		environ['QUERY_STRING'] = 'a=1&b=2&b=3'
-		req = app.build_request(environ)
+		req, err = app.build_request(environ)
+		self.assertIsNone(err)
 		self.assertEqual(req.query, {'a': '1', 'b': ['2', '3']})
 
 		environ['CONTENT_TYPE'] = 'application/json; charset=utf8'
 		environ['wsgi.input'] = io.BytesIO(b'{"a": 1, "a": NaN}')
-		req = app.build_request(environ)
+		req, err = app.build_request(environ)
+		self.assertIsNone(err)
 		self.assertTrue(math.isnan(req.body['a']))
 
 		environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
 		environ['wsgi.input'] = io.BytesIO(b'a=1&b=2&b=3')
-		req = app.build_request(environ)
+		req, err = app.build_request(environ)
+		self.assertIsNone(err)
 		self.assertEqual(req.body, {'a': '1', 'b': ['2', '3']})
 
 		environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded; charset=latin1'
 		environ['wsgi.input'] = io.BytesIO('a=Ï'.encode('latin-1')) # capital I with diaresis, 0xCF in latin-1
-		req = app.build_request(environ)
+		req, err = app.build_request(environ)
+		self.assertIsNone(err)
 		self.assertEqual(req.body, {'a': 'Ï'})
 
 		environ['CONTENT_TYPE'] = 'multipart/form-data; boundary=boundary'
@@ -58,7 +64,8 @@ class PigWigTests(unittest.TestCase):
 		blah blah blah
 		--boundary--
 		''').encode())
-		req = app.build_request(environ)
+		req, err = app.build_request(environ)
+		self.assertIsNone(err)
 		self.assertEqual(req.body, {'a': [b'1', b'2'], 'file1': b'blah blah blah'})
 
 	def test_parse_qs(self):
@@ -68,3 +75,23 @@ class PigWigTests(unittest.TestCase):
 		self.assertRaises(HTTPException, parse_qs, 'a=1&b')
 
 		self.assertRaises(HTTPException, parse_qs, 'a=%80')
+
+	def test_exception_handling(self):
+		start_response = mock.MagicMock()
+		environ = {'REQUEST_METHOD': 'GET', 'PATH_INFO': '/', 'wsgi.input': None, 'wsgi.errors': io.StringIO()}
+
+		app = PigWig([])
+		app(environ, start_response)
+		start_response.assert_called_with('404 Not Found', mock.ANY)
+
+		heh = mock.MagicMock()
+		app = PigWig([], http_exception_handler=heh)
+		app(environ, start_response)
+		http_exception = heh.call_args[0][0]
+		self.assertEqual(http_exception.code, 404)
+
+		eh = mock.MagicMock()
+		app = PigWig([('GET', '/', lambda req: 0/0)], exception_handler=eh)
+		app(environ, start_response)
+		exception = eh.call_args[0][0]
+		self.assertIsInstance(exception, ZeroDivisionError)

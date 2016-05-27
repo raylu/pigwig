@@ -90,7 +90,7 @@ class PigWig:
 			request, err = self.build_request(environ)
 			try:
 				if err:
-					raise err
+					raise err # pylint: disable=raising-bad-type
 
 				handler, kwargs = self.routes.route(request.method, request.path)
 				response = handler(request, **kwargs)
@@ -123,7 +123,7 @@ class PigWig:
 		query = {}
 		headers = HTTPHeaders()
 		cookies = http.cookies.SimpleCookie()
-		err = None
+		body = err = None
 
 		try:
 			qs = environ.get('QUERY_STRING')
