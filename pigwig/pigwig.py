@@ -32,13 +32,13 @@ class PigWig:
 		:type routes: list or function
 		:param routes: a list of 3-tuples: ``(method, path, handler)`` or a function that returns
 		  such a list
-		   * ``method`` is the HTTP method/verb (``GET``, ``POST``, etc.)
-		   * ``path`` can either be a static path (``/foo/bar``) or have params (``/post/<id>``). params
-		     are passed to the handler as keyword arguments. params cannot be optional, but you can map
-		     two routes to a handler that takes an optional argument. params must make up the entire
-		     path segment - you cannot have ``/post_<id>``.
-		   * ``handler`` is a function taking a ``request`` positional argument and any number of param
-		     keyword arguments
+		    * ``method`` is the HTTP method/verb (``GET``, ``POST``, etc.)
+		    * ``path`` can either be a static path (``/foo/bar``) or have params (``/post/<id>``).
+		      params are passed to the handler as keyword arguments. params cannot be optional, but
+		      you can map two routes to a handler that takes an optional argument. params must make
+		      up the entire path segment - you cannot have ``/post_<id>``.
+		    * ``handler`` is a function taking a :class:`.Request` positional argument and any
+		      number of param keyword arguments
 		  having two identical static routes or two overlapping param segments (``/foo/<bar>`` and
 		  ``/foo/<baz>``) with the same method raises an :class:`.exceptions.RouteConflict`
 
@@ -55,12 +55,24 @@ class PigWig:
 		:param cookie_secret: app-wide secret used for signing secure cookies. see
 		  :func:`Request.get_secure_cookie`
 
+		:param http_exception_handler: a function that will be called when an
+		  :class:`.exceptions.HTTPException` is raised. it will be passed the original exception,
+		  ``wsgi.errors``, the :class:`.Request`, and a reference to this :class:`.PigWig` instance.
+		  it must return a :class:`.Response` and should almost certainly have the code of the
+		  original exception.
+
+		:param exception_handler: a function that will be called when any other exception is raised.
+		  it will be passed the same arguments as ``http_exception_handler`` and must also return a
+		  :class:`.Response`. be careful: raising an exception here is bad.
+
 		has the following instance attrs:
 
 		* ``routes`` - an internal representation of the route tree - not the list passed to the
 		  constructor
 		* ``template_engine``
 		* ``cookie_secret``
+		* ``http_exception_handler``
+		* ``exception_handler``
 	'''
 
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine,

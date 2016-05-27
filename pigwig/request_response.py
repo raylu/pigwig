@@ -69,9 +69,11 @@ class Response:
 	'''
 	every route handler should return an instance of this class (or raise an :class:`.exceptions.HTTPException`)
 
-	:param body: if ``None``, the response body is empty.
-	  if a ``str``, the response body is UTF-8 encoded.
-	  if a generator, the response streams the yielded bytes.
+	:param body:
+	  * if ``None``, the response body is empty
+	  * if a ``str``, the response body is UTF-8 encoded
+	  * if a ``bytes``, the response body is sent as-is
+	  * if a generator, the response streams the yielded bytes
 	:type code: int
 	:param code: HTTP status code; the "reason phrase" is generated automatically from
 	  `http.client.responses <https://docs.python.org/3/library/http.client.html#http.client.responses>`_
