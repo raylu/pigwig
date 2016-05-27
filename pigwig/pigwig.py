@@ -59,7 +59,7 @@ class PigWig:
 		  :class:`.exceptions.HTTPException` is raised. it will be passed the original exception,
 		  ``wsgi.errors``, the :class:`.Request`, and a reference to this :class:`.PigWig` instance.
 		  it must return a :class:`.Response` and should almost certainly have the code of the
-		  original exception.
+		  original exception. exceptions raised here can be handled by ``exception_handler``.
 
 		:param exception_handler: a function that will be called when any other exception is raised.
 		  it will be passed the same arguments as ``http_exception_handler`` and must also return a
@@ -101,14 +101,15 @@ class PigWig:
 
 			request, err = self.build_request(environ)
 			try:
-				if err:
-					raise err # pylint: disable=raising-bad-type
+				try:
+					if err:
+						raise err # pylint: disable=raising-bad-type
 
-				handler, kwargs = self.routes.route(request.method, request.path)
-				response = handler(request, **kwargs)
-			except exceptions.HTTPException as e:
-				response = self.http_exception_handler(e, errors, request, self)
-			except Exception as e:
+					handler, kwargs = self.routes.route(request.method, request.path)
+					response = handler(request, **kwargs)
+				except exceptions.HTTPException as e:
+					response = self.http_exception_handler(e, errors, request, self)
+			except Exception as e: # something went wrong in handler or http_exception_handler
 				response = self.exception_handler(e, errors, request, self)
 
 			if isinstance(response.body, str):

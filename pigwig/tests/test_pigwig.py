@@ -95,3 +95,12 @@ class PigWigTests(unittest.TestCase):
 		app(environ, start_response)
 		exception = eh.call_args[0][0]
 		self.assertIsInstance(exception, ZeroDivisionError)
+
+		heh.reset()
+		eh.reset()
+		heh.side_effect = NotADirectoryError()
+		app = PigWig([], http_exception_handler=heh, exception_handler=eh)
+		app(environ, start_response)
+		self.assertTrue(heh.called)
+		exception = eh.call_args[0][0]
+		self.assertIsInstance(exception, NotADirectoryError)
