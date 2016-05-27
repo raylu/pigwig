@@ -25,6 +25,7 @@ def routes():
 	return [
 		('GET', '/', root),
 		('GET', '/post/<id>', post),
+		('GET', '/posts/<path:ids>', posts),
 		('GET', '/login', login_form),
 		('POST', '/login', login),
 		('GET', '/admin', admin),
@@ -54,7 +55,16 @@ def post(request, id):
 		post = next(posts)
 	except StopIteration:
 		raise HTTPException(404, 'invalid post id')
-	return Response.render(request, 'post.jinja2', {'post': post})
+	return Response.render(request, 'posts.jinja2', {'posts': [post]})
+
+def posts(request, ids):
+	ids = list(map(int, ids.split('/')))
+	posts = db.execute('''
+		SELECT users.username, posts.title, posts.body
+		FROM posts JOIN users on posts.user_id = users.id
+		WHERE posts.id IN (%s)
+	''' % ','.join('?' * len(ids)), ids)
+	return Response.render(request, 'posts.jinja2', {'posts': posts})
 
 def login_form(request):
 	return Response.render(request, 'login.jinja2', {})

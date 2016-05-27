@@ -23,12 +23,15 @@ class RouteTests(unittest.TestCase):
 			('GET', '/one', 1),
 			('GET', '/<p1>', 2),
 			('GET', '/<p1>/three', 3),
-			('GET', '/<p1>/<p2>', 2),
+			('GET', '/<p1>/three/four', 4),
+			('GET', '/<p1>/<path:p2>', 2),
 		])
 		self.assertEqual(t.route('GET', '/one'), (1, {}))
 		self.assertEqual(t.route('GET', '/two'), (2, {'p1': 'two'}))
 		self.assertEqual(t.route('GET', '/two/three'), (3, {'p1': 'two'}))
+		self.assertEqual(t.route('GET', '/two/three/four'), (4, {'p1': 'two'}))
 		self.assertEqual(t.route('GET', '/two/foo'), (2, {'p1': 'two', 'p2': 'foo'}))
+		self.assertEqual(t.route('GET', '/two/foo/bar'), (2, {'p1': 'two', 'p2': 'foo/bar'}))
 
 	def test_conflict(self):
 		with self.assertRaises(exceptions.RouteConflict):
