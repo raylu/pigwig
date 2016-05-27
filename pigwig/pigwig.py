@@ -57,9 +57,10 @@ class PigWig:
 
 		:param http_exception_handler: a function that will be called when an
 		  :class:`.exceptions.HTTPException` is raised. it will be passed the original exception,
-		  ``wsgi.errors``, the :class:`.Request`, and a reference to this :class:`.PigWig` instance.
-		  it must return a :class:`.Response` and should almost certainly have the code of the
-		  original exception. exceptions raised here can be handled by ``exception_handler``.
+		  `wsgi.errors <https://www.python.org/dev/peps/pep-0333/#environ-variables>`_, the
+		  :class:`.Request`, and a reference to this :class:`.PigWig` instance. it must return a
+		  :class:`.Response` and should almost certainly have the code of the original exception.
+		  exceptions raised here can be handled by ``exception_handler``.
 
 		:param exception_handler: a function that will be called when any other exception is raised.
 		  it will be passed the same arguments as ``http_exception_handler`` and must also return a
