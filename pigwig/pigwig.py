@@ -169,7 +169,7 @@ class PigWig:
 
 		return Request(self, method, path, query, headers, body, cookies, environ), err
 
-	def main(self, host='0.0.0.0', port=8000):
+	def main(self, host='0.0.0.0', port=None):
 		'''
 		sets up the autoreloader and runs a
 		`wsgiref.simple_server <https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server>`_.
@@ -191,8 +191,10 @@ class PigWig:
 		if have_reloader:
 			reloader.init()
 
-		if len(sys.argv) == 2:
-			port = int(sys.argv[1])
+		if port is None:
+			port = 8000
+			if len(sys.argv) == 2:
+				port = int(sys.argv[1])
 		server = wsgiref.simple_server.make_server(host, port, self)
 		print('listening on', port)
 		server.serve_forever()
