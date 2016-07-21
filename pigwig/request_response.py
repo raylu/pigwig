@@ -129,7 +129,7 @@ class Response:
 		if expires:
 			expires = expires.strftime('%a, %d %b %Y %H:%M:%S GMT')
 			cookie += '; Expires=%s' % expires
-		if max_age:
+		if max_age is not None:
 			cookie += '; Max-Age=%d' % max_age.total_seconds()
 		if secure:
 			cookie += '; Secure'

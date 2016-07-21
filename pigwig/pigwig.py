@@ -16,7 +16,7 @@ from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
 def default_http_exception_handler(e, errors, request, app):
-	errors.write(textwrap.indent(e.body + '\n', '\t'))
+	errors.write(textwrap.indent(e.body, '\t') + '\n')
 	return Response(e.body.encode('utf-8', 'replace'), e.code)
 
 def default_exception_handler(e, errors, request, app):
