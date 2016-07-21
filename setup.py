@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name='pigwig',
-	version='0.3.0',
+	version='0.4.0',
 	description='a python3.4+ WSGI framework',
 	long_description='pigs with wigs',
 	url='https://github.com/raylu/pigwig',
@@ -13,5 +13,5 @@ setup(
 		'Programming Language :: Python :: 3.4',
 		'Topic :: Internet :: WWW/HTTP :: WSGI',
 	],
-	packages=find_packages(exclude=['docs', 'tests*', 'blogwig']),
+	packages=find_packages(exclude=['docs', 'pigwig.tests', 'blogwig']),
 )
