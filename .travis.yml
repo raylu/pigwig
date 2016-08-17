@@ -1,17 +1,17 @@
 language: python
 
 python:
-  - "3.4"
   - "3.5"
 
 sudo: false
 
 install:
-  - pip install --quiet pylint
+  - pip install --quiet pylint mypy-lang
 
 script:
   - python -m unittest -v
   - pylint pigwig
+  - mypy pigwig
 
 notifications:
   email:
