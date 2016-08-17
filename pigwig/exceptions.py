@@ -6,7 +6,7 @@ class HTTPException(Exception):
 	:param body: unlike in :class:`.Response`, must be a ``str``
 	'''
 
-	def __init__(self, code, body):
+	def __init__(self, code: int, body: str) -> None:
 		super().__init__(code, body)
 		self.code = code
 		self.body = body

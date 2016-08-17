@@ -2,7 +2,7 @@ import io
 import math
 import textwrap
 import unittest
-from unittest import mock
+from unittest import mock # type: ignore
 
 from pigwig import PigWig
 from pigwig.exceptions import HTTPException
