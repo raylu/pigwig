@@ -34,9 +34,11 @@ class PigWig:
 		  such a list
 		    * ``method`` is the HTTP method/verb (``GET``, ``POST``, etc.)
 		    * ``path`` can either be a static path (``/foo/bar``) or have params (``/post/<id>``).
-		      params are passed to the handler as keyword arguments. params cannot be optional, but
-		      you can map two routes to a handler that takes an optional argument. params must make
-		      up the entire path segment - you cannot have ``/post_<id>``.
+		      params can be prefixed with ``path:`` to eat up the rest of the path
+		      (``/tree/<path:subdir>`` matches ``/tree/a/b/c``). params are passed to the handler as
+		      keyword arguments. params cannot be optional, but you can map two routes to a handler
+		      that takes an optional argument. params must make up the entire path segment - you
+		      cannot have ``/post_<id>``.
 		    * ``handler`` is a function taking a :class:`.Request` positional argument and any
 		      number of param keyword arguments
 		  having two identical static routes or two overlapping param segments (``/foo/<bar>`` and
