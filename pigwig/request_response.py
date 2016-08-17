@@ -3,7 +3,7 @@ import copy
 import hashlib
 import hmac
 import http.cookies
-import json
+import json as jsonlib
 import time
 
 from . import exceptions
@@ -93,7 +93,7 @@ class Response:
 		('Access-Control-Allow-Headers', 'Authorization, X-Requested-With, X-Request'),
 	]
 
-	json_encoder = json.JSONEncoder(indent='\t')
+	json_encoder = jsonlib.JSONEncoder(indent='\t')
 	simple_cookie = http.cookies.SimpleCookie()
 
 	def __init__(self, body=None, code=200, content_type='text/plain', location=None, extra_headers=None):
