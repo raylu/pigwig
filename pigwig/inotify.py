@@ -1,6 +1,6 @@
 from collections import namedtuple
-import ctypes
-import ctypes.util
+import ctypes # type:ignore
+import ctypes.util # type:ignore
 from enum import IntEnum
 import errno
 import os

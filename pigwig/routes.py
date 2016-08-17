@@ -1,16 +1,19 @@
 import textwrap
+from typing import Callable, Dict, List, Tuple
 import re
 
 from . import exceptions
 
 class RouteNode:
-	def __init__(self):
-		self.method_handlers = {}
-		self.static_children = {}
-		self.param_name = self.param_children = self.param_is_path = None
+	def __init__(self) -> None:
+		self.method_handlers = {} # type: Dict[str, Callable]
+		self.static_children = {} # type: Dict[str, RouteNode]
+		self.param_name = None # type: str
+		self.param_children = None # type: RouteNode
+		self.param_is_path = None # type: bool
 
 	param_re = re.compile(r'<([\w:]+)>')
-	def assign_route(self, path_elements, method, handler):
+	def assign_route(self, path_elements: List[str], method: str, handler: Callable) -> None:
 		if not path_elements or path_elements[0] == '':
 			if len(path_elements) > 1:
 				raise Exception('cannot have consecutive / in routes')
@@ -42,7 +45,7 @@ class RouteNode:
 
 		child.assign_route(remaining, method, handler)
 
-	def get_route(self, method, path_elements, params):
+	def get_route(self, method: str, path_elements: List[str], params: Dict[str, str]) -> Tuple[Callable, Dict]:
 		if not path_elements or path_elements[0] == '':
 			handler = self.method_handlers.get(method)
 			if handler is not None:
@@ -66,11 +69,11 @@ class RouteNode:
 			child = self.param_children
 		return child.get_route(method, remaining, params)
 
-	def route(self, method, path):
+	def route(self, method: str, path: str) -> Tuple[Callable, Dict]:
 		path_elements = path[1:].split('/')
 		return self.get_route(method, path_elements, {})
 
-	def __str__(self):
+	def __str__(self) -> str:
 		rval = []
 		for method, handler in self.method_handlers.items():
 			rval.append('%s: %s,' % (method, handler))
@@ -83,7 +86,7 @@ class RouteNode:
 			rval.append('%s: %s' % (name, self.param_children))
 		return '{\n%s\n}' % textwrap.indent('\n'.join(rval), '\t')
 
-def build_route_tree(routes):
+def build_route_tree(routes: List[Tuple[str, str, Callable]]) -> RouteNode:
 	root_node = RouteNode()
 	for method, path, handler in routes:
 		path_elements = path[1:].split('/')

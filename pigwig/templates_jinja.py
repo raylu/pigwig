@@ -1,5 +1,5 @@
 try:
-	import jinja2
+	import jinja2 # type: ignore
 except ImportError:
 	jinja2 = None
 

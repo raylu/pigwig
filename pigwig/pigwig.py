@@ -7,22 +7,27 @@ import json
 import sys
 import textwrap
 import traceback
+from typing import Any, BinaryIO, Callable, Dict, Iterable, List, TextIO, Tuple, Union
 import urllib.parse
-import wsgiref.simple_server
+import wsgiref.simple_server # type: ignore
 
 from . import exceptions, multipart
 from .request_response import HTTPHeaders, Request, Response
 from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
 
-def default_http_exception_handler(e, errors, request, app):
+def default_http_exception_handler(e: exceptions.HTTPException, errors: TextIO, request: Request,
+		app: 'PigWig') -> Response:
 	errors.write(textwrap.indent(e.body, '\t') + '\n')
 	return Response(e.body.encode('utf-8', 'replace'), e.code)
 
-def default_exception_handler(e, errors, request, app):
+def default_exception_handler(e: Exception, errors: TextIO, request: Request, app: 'PigWig') -> Response:
 	tb = traceback.format_exc()
 	errors.write(tb)
 	return Response(tb.encode('utf-8', 'replace'), 500)
+
+HTTPExceptionHandler = Callable[[exceptions.HTTPException, TextIO, Request, 'PigWig'], Response]
+ExceptionHandler = Callable[[Exception, TextIO, Request, 'PigWig'], Response]
 
 class PigWig:
 	'''
@@ -82,9 +87,10 @@ class PigWig:
 		* ``exception_handler``
 	'''
 
-	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine,
-			cookie_secret=None, http_exception_handler=default_http_exception_handler,
-			exception_handler=default_exception_handler, response_done_handler=None):
+	def __init__(self, routes, template_dir: str=None,
+			template_engine: type=JinjaTemplateEngine, cookie_secret: bytes=None,
+			http_exception_handler: HTTPExceptionHandler=default_http_exception_handler,
+			exception_handler: ExceptionHandler=default_exception_handler, response_done_handler=None) -> None:
 		if callable(routes):
 			routes = routes()
 		self.routes = build_route_tree(routes)
@@ -99,7 +105,7 @@ class PigWig:
 		self.exception_handler = exception_handler
 		self.response_done_handler = response_done_handler
 
-	def __call__(self, environ, start_response):
+	def __call__(self, environ: Dict, start_response: Callable) -> Iterable[bytes]:
 		''' main WSGI entrypoint '''
 		errors = environ.get('wsgi.errors', sys.stderr)
 		try:
@@ -139,14 +145,15 @@ class PigWig:
 			start_response('500 Internal Server Error', [])
 			return [b'internal server error']
 
-	def build_request(self, environ):
+	def build_request(self, environ: Dict) -> Tuple[Request, Exception]:
 		''' builds :class:`.Response` objects. for internal use. '''
 		method = environ['REQUEST_METHOD']
 		path = environ['PATH_INFO']
-		query = {}
-		headers = HTTPHeaders()
-		cookies = http.cookies.SimpleCookie()
-		body = err = None
+		query = {} # type: Dict[str, Union[List[str], str]]
+		headers = HTTPHeaders() # type: ignore
+		cookies = http.cookies.SimpleCookie() # type: ignore
+		body = None # type: Union[Tuple[Any, int], Dict]
+		err = None
 
 		try:
 			qs = environ.get('QUERY_STRING')
@@ -161,7 +168,7 @@ class PigWig:
 			content_type = environ.get('CONTENT_TYPE')
 			if content_type:
 				headers['Content-Type'] = content_type
-				media_type, params = cgi.parse_header(content_type)
+				media_type, params = cgi.parse_header(content_type) # type: ignore
 				handler = self.content_handlers.get(media_type)
 				if handler:
 					body = handler(environ['wsgi.input'], content_length, params)
@@ -212,12 +219,12 @@ class PigWig:
 		server.serve_forever()
 
 	@staticmethod
-	def handle_urlencoded(body, length, params):
+	def handle_urlencoded(body: BinaryIO, length: int, params: Dict[str, str]) -> Dict[str, Union[str, List[str]]]:
 		charset = params.get('charset', 'utf-8')
 		return parse_qs(body.read(length).decode(charset))
 
 	@staticmethod
-	def handle_json(body, length, params):
+	def handle_json(body: BinaryIO, length: int, params: Dict[str, str]) -> Any:
 		charset = params.get('charset', 'utf-8')
 		return json.loads(body.read(length).decode(charset))
 
@@ -230,17 +237,20 @@ class PigWig:
 				form[k] = v[0]
 		return form
 
+	content_handlers = None # type: Dict[str, Callable[[BinaryIO, int, Dict[str, str]], Any]]
+
 PigWig.content_handlers = {
 	'application/json': PigWig.handle_json,
 	'application/x-www-form-urlencoded': PigWig.handle_urlencoded,
 	'multipart/form-data': PigWig.handle_multipart,
 }
 
-def parse_qs(qs):
+def parse_qs(qs: str) -> Dict[str, Union[str, List[str]]]:
 	if not qs:
 		return {}
 	try:
-		parsed = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True, errors='strict')
+		parsed = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True,
+				errors='strict') # type: Dict[str, Any]
 	except UnicodeDecodeError as e:
 		qs_trunc = qs
 		if len(qs_trunc) > 24:
