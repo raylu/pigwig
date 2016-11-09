@@ -193,6 +193,9 @@ class PigWig:
 		if have_reloader:
 			reloader.init()
 
+		if hasattr(self.template_engine, 'jinja_env'):
+			self.template_engine.jinja_env.auto_reload = True
+
 		if port is None:
 			port = 8000
 			if len(sys.argv) == 2:

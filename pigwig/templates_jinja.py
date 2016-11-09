@@ -8,7 +8,7 @@ class JinjaTemplateEngine:
 		if not jinja2:
 			raise Exception('Cannot use %s without jinja2 installed' % self.__class__)
 		loader = jinja2.FileSystemLoader(template_dir)
-		self.jinja_env = jinja2.Environment(loader=loader)
+		self.jinja_env = jinja2.Environment(loader=loader, auto_reload=False)
 
 	def stream(self, template_name, context):
 		# generate jinja2.Template object first, potentially throwing TemplateNotFound
