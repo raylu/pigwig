@@ -157,7 +157,7 @@ class PigWig:
 				media_type, params = cgi.parse_header(content_type)
 				handler = self.content_handlers.get(media_type)
 				if handler:
-					body = handler(environ['wsgi.input'], content_length, params)
+					body = handler(environ['wsgi.input'], content_length, params, headers)
 
 			http_cookie = environ.get('HTTP_COOKIE')
 			if http_cookie:
@@ -205,23 +205,21 @@ class PigWig:
 		server.serve_forever()
 
 	@staticmethod
-	def handle_urlencoded(body, length, params):
+	def handle_urlencoded(body, length, params, headers):
 		charset = params.get('charset', 'utf-8')
 		return parse_qs(body.read(length).decode(charset))
 
 	@staticmethod
-	def handle_json(body, length, params):
+	def handle_json(body, length, params, headers):
 		charset = params.get('charset', 'utf-8')
 		return json.loads(body.read(length).decode(charset))
 
 	@staticmethod
-	def handle_multipart(body, length, params):
-		params['boundary'] = params['boundary'].encode()
-		form = cgi.parse_multipart(body, params)
-		for k, v in form.items():
-			if len(v) == 1:
-				form[k] = v[0]
-		return form
+	def handle_multipart(body, length, params, headers):
+		charset = params.get('charset', 'utf-8')
+		fs = cgi.FieldStorage(fp=body, headers=headers, environ={'REQUEST_METHOD': 'POST'},
+				keep_blank_values=True, strict_parsing=True, encoding=charset, errors='strict')
+		return fs
 
 PigWig.content_handlers = {
 	'application/json': PigWig.handle_json,
