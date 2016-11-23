@@ -86,18 +86,38 @@ autodoc_default_flags = ['show-inheritance', 'members', 'undoc-members', 'privat
 # -- linkcode
 
 def linkcode_resolve(domain, info):
+	import pigwig, os.path
 	if domain != 'py' or not info['module']:
 		return None
 	module = info['module']
 	fullname = info['fullname']
+	split = fullname.split('.')
 	if module == 'pigwig':
-		import pigwig
-		module = getattr(pigwig, fullname.split('.')[0]).__module__
-	module = module.replace('.', '/')
-	fullname = fullname.replace('.', '/')
-	base_url = 'https://sourcegraph.com/github.com/raylu/pigwig@master/.PipPackage/pigwig/.def/'
-	return base_url + '%s/%s' % (module, fullname)
+		module = getattr(pigwig, split[0]).__module__
+	basedir = os.path.normpath(os.path.join(os.path.dirname(pigwig.__file__), '..'))
+	filename = module.replace('.', '/') + '.py'
+	path = os.path.join(basedir, filename)
+	lineno = lookup(get_symtable(path), split)
+	if lineno:
+		return 'https://github.com/raylu/pigwig/blob/master/%s#L%d' % (filename, lineno)
 
+def lookup(st, name):
+	if not name:
+		return st.get_lineno()
+	for c in st.get_children():
+		if c.get_name() == name[0]:
+			return lookup(c, name[1:])
+
+symtables = {}
+def get_symtable(path):
+	import symtable
+	try:
+		st = symtables[path]
+	except KeyError:
+		with open(path, 'r') as f:
+			st = symtable.symtable(f.read(), path, 'exec')
+		symtables[path] = st
+	return st
 
 # -- Options for HTML output ----------------------------------------------
 
