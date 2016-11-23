@@ -43,6 +43,7 @@ and the `readme <https://github.com/raylu/pigwig#facs-frequent-annoying-comments
 
    pigwig
    request_response
+   multipart
    exceptions
 
 indices and tables

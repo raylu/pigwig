@@ -66,7 +66,9 @@ class PigWigTests(unittest.TestCase):
 		''').encode())
 		req, err = app.build_request(environ)
 		self.assertIsNone(err)
-		self.assertEqual(req.body, {'a': [b'1', b'2'], 'file1': b'blah blah blah'})
+		self.assertEqual(req.body['a'], [b'1', b'2'])
+		self.assertEqual(req.body['file1'].data, b'blah blah blah')
+		self.assertEqual(req.body['file1'].filename, 'the_file')
 
 	def test_parse_qs(self):
 		r = parse_qs('a=1&b=2')
