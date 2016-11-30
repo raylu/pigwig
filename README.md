@@ -69,3 +69,5 @@ but it's easy enough to achieve:
 	```
 1. **django-style integration with an ORM is better**  
 you're wrong
+
+[![coverage status](https://coveralls.io/repos/github/raylu/pigwig/badge.svg)](https://coveralls.io/github/raylu/pigwig)

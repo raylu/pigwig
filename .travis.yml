@@ -8,10 +8,14 @@ sudo: false
 
 install:
   - pip install --quiet pylint
+  - pip install coveralls
 
 script:
-  - python -m unittest -v
+  - coverage run --source pigwig -m unittest -v
   - pylint pigwig
+
+after_success:
+  coveralls
 
 notifications:
   email:

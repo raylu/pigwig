@@ -1,6 +1,7 @@
 __pycache__/
 /blogwig/blogwig.db
 /docs/_build/
+/.coverage
 
 /pigwig.egg-info/
 /build/
