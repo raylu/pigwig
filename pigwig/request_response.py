@@ -108,7 +108,7 @@ class Response:
 			headers.extend(extra_headers)
 		self.headers = headers
 
-	def set_cookie(self, key, value, domain=None, path=None, expires=None, max_age=None, secure=False, http_only=False):
+	def set_cookie(self, key, value, domain=None, path='/', expires=None, max_age=None, secure=False, http_only=False):
 		'''
 		adds a Set-Cookie header
 

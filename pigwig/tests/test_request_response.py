@@ -22,6 +22,23 @@ class ResponseTests(unittest.TestCase):
 		self.assertGreater(len(chunks), 1)
 		self.assertEqual(b''.join(chunks), json.dumps(big_obj).encode())
 
+	def test_cookie(self):
+		app = PigWig([])
+		r = Response()
+		r.set_cookie('cow', 'moo')
+		r.set_cookie('duck', 'quack', path='/pond')
+
+		cookies = http.cookies.SimpleCookie()
+		for header, value in r.headers:
+			if header == 'Set-Cookie':
+				cookies.load(value)
+
+		req = Request(app, None, None, None, None, None, cookies, None)
+		self.assertEqual(req.cookies['cow'].value, 'moo')
+		self.assertEqual(req.cookies['cow']['path'], '/')
+		self.assertEqual(req.cookies['duck'].value, 'quack')
+		self.assertEqual(req.cookies['duck']['path'], '/pond')
+
 	def test_secure_cookie(self):
 		app = PigWig([], cookie_secret=b'a|b')
 		req = Request(app, None, None, None, None, None, None, None)
