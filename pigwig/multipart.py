@@ -73,7 +73,7 @@ def parse_multipart(fp, pdict):
 			continue
 
 		if 'filename' in params:
-			data = MultipartFile(data, params['filename']) # pylint: disable=redefined-variable-type
+			data = MultipartFile(data, params['filename'])
 		if name in partdict:
 			partdict[name].append(data)
 		else:
