@@ -68,6 +68,10 @@ class PigWig:
 		  it will be passed the same arguments as ``http_exception_handler`` and must also return a
 		  :class:`.Response`. be careful: raising an exception here is bad.
 
+		:param response_done_handler: a function that will be called when control has been returned
+		  back to the WSGI server. it will be passed a request and response. be careful: raising an
+		  exception here is very bad.
+
 		has the following instance attrs:
 
 		* ``routes`` - an internal representation of the route tree - not the list passed to the
@@ -80,7 +84,7 @@ class PigWig:
 
 	def __init__(self, routes, template_dir=None, template_engine=JinjaTemplateEngine,
 			cookie_secret=None, http_exception_handler=default_http_exception_handler,
-			exception_handler=default_exception_handler):
+			exception_handler=default_exception_handler, response_done_handler=None):
 		if callable(routes):
 			routes = routes()
 		self.routes = build_route_tree(routes)
@@ -93,6 +97,7 @@ class PigWig:
 		self.cookie_secret = cookie_secret
 		self.http_exception_handler = http_exception_handler
 		self.exception_handler = exception_handler
+		self.response_done_handler = response_done_handler
 
 	def __call__(self, environ, start_response):
 		''' main WSGI entrypoint '''
@@ -126,6 +131,8 @@ class PigWig:
 
 			status_line = '%d %s' % (response.code, http.client.responses[response.code])
 			start_response(status_line, response.headers)
+			if self.response_done_handler:
+				self.response_done_handler(request, response)
 			return response.body
 		except: # something went very wrong handling OPTIONS, in error handling, or in sending the response
 			errors.write(traceback.format_exc())
