@@ -22,7 +22,6 @@ def _reloader(fd, wds):
 	for event in events:
 		print(wds[event.wd], 'changed, reloading...')
 	do_reload(fd)
-	return
 
 def do_reload(fd):
 	os.close(fd)
