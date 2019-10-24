@@ -187,10 +187,10 @@ class PigWig:
 
 		have_reloader = True
 		if sys.platform == 'linux':
-			from . import reloader_linux as reloader
+			from . import reloader_linux as reloader # pylint: disable=import-outside-toplevel
 		elif sys.platform == 'darwin':
 			try:
-				from . import reloader_osx as reloader
+				from . import reloader_osx as reloader # pylint: disable=import-outside-toplevel
 			except ImportError as e:
 				have_reloader = False
 				print('install', e.name, 'for auto-reloading')
