@@ -89,6 +89,7 @@ class PigWigTests(unittest.TestCase):
 		heh = mock.MagicMock()
 		app = PigWig([], http_exception_handler=heh)
 		app(environ, start_response)
+		# pylint: disable=unsubscriptable-object
 		http_exception = heh.call_args[0][0]
 		self.assertEqual(http_exception.code, 404)
 
