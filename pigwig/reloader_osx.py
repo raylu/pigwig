@@ -16,7 +16,7 @@ def init():
 	for module in sys.modules.values():
 		try:
 			pathname = os.path.dirname(module.__file__)
-		except AttributeError:
+		except (AttributeError, TypeError):
 			continue
 		paths.append(pathname)
 

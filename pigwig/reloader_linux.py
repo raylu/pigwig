@@ -12,6 +12,8 @@ def init():
 			pathname = module.__file__
 		except AttributeError:
 			continue
+		if pathname is None:
+			continue
 		wd = inotify.add_watch(fd, pathname, inotify.IN.CLOSE_WRITE)
 		wds[wd] = pathname
 
