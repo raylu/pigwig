@@ -237,6 +237,8 @@ PigWig.content_handlers = {
 }
 
 def parse_qs(qs):
+	if not qs:
+		return {}
 	try:
 		parsed = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True, errors='strict')
 	except UnicodeDecodeError as e:
