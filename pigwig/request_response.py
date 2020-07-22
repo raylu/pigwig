@@ -188,7 +188,7 @@ class Response:
 		:param context: if you used the default jinja2 template engine, this is a dict
 
 		'''
-		body = request.app.template_engine.stream(template, context)
+		body = request.app.template_engine.render(template, context)
 		response = cls(body, content_type='text/html; charset=utf-8')
 		return response
 
