@@ -1,11 +1,11 @@
 language: python
 
-dist: bionic
+dist: focal
 sudo: false
 
 python:
   - "3.6"
-  - "3.8"
+  - "3.9"
 
 install:
   - pip install --quiet 'pylint<2.5' coveralls
