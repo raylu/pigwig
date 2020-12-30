@@ -71,11 +71,10 @@ class PigWigTests(unittest.TestCase):
 		self.assertEqual(req.body['file1'].filename, 'the_file')
 
 	def test_parse_qs(self):
-		r = parse_qs('a=1&b=2')
-		self.assertEqual(r, {'a': '1', 'b': '2'})
+		self.assertEqual(parse_qs('a=1&b=2'), {'a': '1', 'b': '2'})
+		self.assertEqual(parse_qs(''), {})
 
 		self.assertRaises(HTTPException, parse_qs, 'a=1&b')
-
 		self.assertRaises(HTTPException, parse_qs, 'a=%80')
 
 	def test_exception_handling(self):
