@@ -1,6 +1,6 @@
 import os
 import sys
-import _thread
+import _thread # pylint: disable=unused-import
 
 from . import inotify
 
@@ -17,6 +17,13 @@ def init():
 		wd = inotify.add_watch(fd, pathname, inotify.IN.CLOSE_WRITE)
 		wds[wd] = pathname
 
+	# pylint: disable=redefined-outer-name,import-outside-toplevel
+	try:
+		import eventlet
+	except ImportError:
+		pass
+	else:
+		_thread = eventlet.patcher.original('_thread')
 	_thread.start_new_thread(_reloader, (fd, wds))
 
 def _reloader(fd, wds):
