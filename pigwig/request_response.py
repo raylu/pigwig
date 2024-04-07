@@ -11,6 +11,9 @@ from collections import UserDict
 
 from . import exceptions
 
+if typing.TYPE_CHECKING:
+	from .pigwig import PigWig
+
 class Request:
 	"""
 	an instance of this class is passed to every route handler. has the following instance attrs:
@@ -28,8 +31,9 @@ class Request:
 	  handed down from the server
 	"""
 
-	def __init__(self, app, method: str, path: str, query: typing.Mapping[str, str |  list[str]],
-			headers: 'HTTPHeaders', body, cookies, wsgi_environ: dict[str, typing.Any]) -> None:
+	def __init__(self, app: PigWig, method: str, path: str, query: typing.Mapping[str, str |  list[str]],
+				headers: HTTPHeaders, body: tuple | dict | None, cookies: http.cookies.BaseCookie,
+				wsgi_environ: dict[str, typing.Any]) -> None:
 		self.app = app
 		self.method = method
 		self.path = path
@@ -52,18 +56,19 @@ class Request:
 		  expiry check is performed
 		:rtype: str or None
 		"""
+		assert self.app.cookie_secret is not None
 		try:
 			cookie = self.cookies[key].value
 		except KeyError:
 			return None
 		try:
-			value, ts, signature = cookie.rsplit('|', 2)
-			ts = int(ts)
+			value, ts_str, signature = cookie.rsplit('|', 2)
+			ts_int = int(ts_str)
 		except ValueError:
 			raise exceptions.HTTPException(400, 'invalid %s cookie: %s' % (key, cookie))
-		value_ts = '%s|%d' % (value, int(ts))
+		value_ts = '%s|%d' % (value, ts_int)
 		if hmac.compare_digest(signature, _hash(key + '|' + value_ts, self.app.cookie_secret)):
-			if max_time is not None and ts + max_time.total_seconds() < time.time(): # cookie has expired
+			if max_time is not None and ts_int + max_time.total_seconds() < time.time(): # cookie has expired
 				return None
 			return value
 		else:
@@ -97,11 +102,12 @@ class Response:
 		('Access-Control-Allow-Headers', 'Authorization, X-Requested-With, X-Request'),
 	)
 
-	json_encoder = jsonlib.JSONEncoder(indent='\t') # type: ignore
-	simple_cookie = http.cookies.SimpleCookie() # type: ignore
+	json_encoder = jsonlib.JSONEncoder(indent='\t')
+	simple_cookie = http.cookies.SimpleCookie()
 
-	def __init__(self, body=None, code: int=200, content_type: str='text/plain',
-			location: str | None=None, extra_headers: list[tuple[str, str]] | None=None) -> None:
+	def __init__(self, body: str | bytes | typing.Iterator[bytes] | None=None, code: int=200,
+				content_type: str='text/plain', location: str | None=None,
+				extra_headers: list[tuple[str, str]] | None=None) -> None:
 		self.body = body
 		self.code = code
 
@@ -114,7 +120,7 @@ class Response:
 		self.headers = headers
 
 	def set_cookie(self, key: str, value: typing.Any, domain: str | None=None, path: str='/',
-			expires: datetime.datetime | None=None, max_age: datetime.timedelta | None =None, secure: bool=False,
+			expires: datetime.datetime | None=None, max_age: datetime.timedelta | None=None, secure: bool=False,
 			http_only: bool=False) -> None:
 		"""
 		adds a Set-Cookie header
@@ -143,7 +149,7 @@ class Response:
 			cookie += '; HttpOnly'
 		self.headers.append(('Set-Cookie', cookie))
 
-	def set_secure_cookie(self, request: Request, key: str, value: typing.Any, **kwargs) -> None:
+	def set_secure_cookie(self, request: Request, key: str, value: typing.Any, **kwargs: typing.Any) -> None:
 		"""
 		this function accepts the same keyword arguments as :func:`.set_cookie` but stores a
 		timestamp and a signature based on ``request.app.cookie_secret``. decode with
@@ -155,6 +161,7 @@ class Response:
 		signing time, expiry is checked with ``get_secure_cookie``. you generally will want to pass
 		this function a ``max_age`` equal to ``max_time`` used when reading the cookie.
 		"""
+		assert request.app.cookie_secret is not None
 		ts = int(time.time())
 		value_ts = '%s|%s' % (value, ts)
 		signature = _hash(key + '|' + value_ts, request.app.cookie_secret)
@@ -162,7 +169,7 @@ class Response:
 		self.set_cookie(key, value_signed, **kwargs)
 
 	@classmethod
-	def json(cls, obj: typing.Any) -> 'Response':
+	def json(cls, obj: typing.Any) -> Response:
 		"""
 		generate a streaming :class:`.Response` object from an object with an ``application/json``
 		content type. the default :attr:`.json_encoder` indents with tabs - override if you want
@@ -209,8 +216,8 @@ class HTTPHeaders(UserDict): # inherit so that __init__ and fromkeys work (even 
 	`casefolds <https://docs.python.org/3/library/stdtypes.html#str.casefold>`_ the keys
 	"""
 
-	def __setitem__(self, key, value):
+	def __setitem__(self, key: str, value: str) -> None:
 		self.data[key.casefold()] = value
 
-	def __getitem__(self, key):
+	def __getitem__(self, key: str) -> str:
 		return self.data[key.casefold()]

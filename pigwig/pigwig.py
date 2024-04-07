@@ -11,12 +11,17 @@ import traceback
 import urllib.parse
 import wsgiref.simple_server
 from inspect import isgenerator
-from typing import Any, BinaryIO, Callable, Iterable, Mapping, MutableMapping, TextIO
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, MutableMapping, TextIO
 
 from . import exceptions, multipart
 from .request_response import HTTPHeaders, Request, Response
 from .routes import build_route_tree
 from .templates_jinja import JinjaTemplateEngine
+
+if TYPE_CHECKING:
+	import io
+
+	from .routes import RouteDefinition
 
 def default_http_exception_handler(e: exceptions.HTTPException, errors: TextIO, request: Request,
 		app: 'PigWig') -> Response:
@@ -89,10 +94,11 @@ class PigWig:
 		* ``exception_handler``
 	"""
 
-	def __init__(self, routes, template_dir: str | None=None,
+	def __init__(self, routes: RouteDefinition | Callable[[], RouteDefinition], template_dir: str | None=None,
 			template_engine: type=JinjaTemplateEngine, cookie_secret: bytes | None=None,
 			http_exception_handler: HTTPExceptionHandler=default_http_exception_handler,
-			exception_handler: ExceptionHandler=default_exception_handler, response_done_handler=None) -> None:
+			exception_handler: ExceptionHandler=default_exception_handler,
+			response_done_handler: Callable[[Request, Response], Any] | None=None) -> None:
 		if callable(routes):
 			routes = routes()
 		self.routes = build_route_tree(routes)
@@ -152,8 +158,8 @@ class PigWig:
 		method = environ['REQUEST_METHOD']
 		path = environ['PATH_INFO']
 		query: Mapping[str, list[str] | str] = {}
-		headers = HTTPHeaders() # type: ignore
-		cookies = http.cookies.SimpleCookie() # type: ignore
+		headers = HTTPHeaders()
+		cookies = http.cookies.SimpleCookie()
 		body: tuple | dict | None = None
 		err = None
 
@@ -162,15 +168,17 @@ class PigWig:
 			if qs:
 				query = parse_qs(qs)
 
-			content_length: int | None = environ.get('CONTENT_LENGTH')
-			if content_length:
-				headers['Content-Length'] = content_length
-				content_length = int(content_length)
+			content_length_str: str | None = environ.get('CONTENT_LENGTH')
+			if content_length_str:
+				headers['Content-Length'] = content_length_str
+				content_length = int(content_length_str)
+			else:
+				content_length = None
 			body = (environ['wsgi.input'], content_length)
 			content_type = environ.get('CONTENT_TYPE')
 			if content_type:
 				headers['Content-Type'] = content_type
-				media_type, params = cgi.parse_header(content_type) # type: ignore
+				media_type, params = cgi.parse_header(content_type)
 				handler = self.content_handlers.get(media_type)
 				if handler:
 					body = handler(environ['wsgi.input'], content_length, params)
@@ -187,7 +195,7 @@ class PigWig:
 
 		return Request(self, method, path, query, headers, body, cookies, environ), err
 
-	def main(self, host='0.0.0.0', port=None):
+	def main(self, host: str='0.0.0.0', port: int | None=None) -> None:
 		"""
 		sets up the autoreloader and runs a
 		`wsgiref.simple_server <https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server>`_.
@@ -221,29 +229,31 @@ class PigWig:
 		server.serve_forever()
 
 	@staticmethod
-	def handle_urlencoded(body: BinaryIO, length: int | None, params: dict[str, str]) -> Mapping[str, str | list[str]]:
+	def handle_urlencoded(body: io.BufferedIOBase, length: int | None,
+			params: dict[str, str]) -> Mapping[str, str | list[str]]:
 		if length is None:
 			length = -1
 		charset = params.get('charset', 'utf-8')
 		return parse_qs(body.read(length).decode(charset))
 
 	@staticmethod
-	def handle_json(body: BinaryIO, length: int | None, params: dict[str, str]) -> Any:
+	def handle_json(body: io.BufferedIOBase, length: int | None, params: dict[str, str]) -> Any:
 		if length is None:
 			length = -1
 		charset = params.get('charset', 'utf-8')
 		return json.loads(body.read(length).decode(charset))
 
 	@staticmethod
-	def handle_multipart(body, length, params):
+	def handle_multipart(body: io.BufferedIOBase,
+				length: int | None, params: dict[str, Any]) -> dict[str, list[bytes | multipart.MultipartFile]]:
 		params['boundary'] = params['boundary'].encode()
 		form = multipart.parse_multipart(body, params)
 		for k, v in form.items():
 			if len(v) == 1:
-				form[k] = v[0]
+				form[k] = v[0] # type: ignore[assignment]
 		return form
 
-	content_handlers: dict[str, Callable[[BinaryIO, int | None, dict[str, str]], Any]]
+	content_handlers: dict[str, Callable[[io.BufferedIOBase, int | None, dict[str, str]], Any]]
 
 PigWig.content_handlers = {
 	'application/json': PigWig.handle_json,

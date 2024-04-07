@@ -12,27 +12,27 @@ libc.__errno_location.restype = ctypes.POINTER(ctypes.c_int)
 
 Event = namedtuple('Event', ['wd', 'mask', 'cookie', 'name'])
 
-def geterr():
+def geterr() -> str:
 	return errno.errorcode[libc.__errno_location().contents.value]
 
-def init():
+def init() -> int:
 	fd = libc.inotify_init()
 	if fd == -1:
 		raise OSError('inotify_init error', geterr())
 	return fd
 
-def add_watch(fd, path, mask):
+def add_watch(fd: int, path: str, mask: int) -> int:
 	wd = libc.inotify_add_watch(fd, path.encode(), mask)
 	if wd == -1:
 		raise OSError('inotify_add_watch error', geterr())
 	return wd
 
-def rm_watch(fd, wd):
+def rm_watch(fd: int, wd: int) -> None:
 	result = libc.inotify_rm_watch(fd, wd)
 	if result == -1:
 		raise OSError('inotify_rm_watch', geterr())
 
-def get_events(fd):
+def get_events(fd: int) -> typing.Iterator[Event]:
 	buf = b''
 	while True:
 		data = os.read(fd, 4096)
@@ -45,8 +45,8 @@ def get_events(fd):
 		wd, mask, cookie, name_len = struct.unpack('iIII', buf[pos:end])
 		pos = end
 		end = end + name_len
-		name = struct.unpack('%ds' % name_len, buf[pos:end])
-		name = name[0].rstrip(b'\0')
+		(name,) = struct.unpack('%ds' % name_len, buf[pos:end])
+		name = name.rstrip(b'\0')
 		yield Event(wd, mask, cookie, name.decode())
 		pos = end
 
