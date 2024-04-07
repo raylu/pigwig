@@ -1,2 +1,20 @@
 [tool.mypy]
-python_version = 3.6
+python_version = '3.6'
+
+[tool.ruff]
+line-length = 120
+[tool.ruff.lint]
+select = [
+	'E', 'F', 'I',
+	'YTT', 'COM', 'T10', 'ISC', 'G', 'PIE', 'Q', 'RSE',
+	'PLC', 'PLE',
+	'RUF',
+]
+ignore = [
+	'E101' # mixed-spaces-and-tabs
+]
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = 'single'
+multiline-quotes = 'single'
+[tool.ruff.lint.isort]
+lines-after-imports = 1

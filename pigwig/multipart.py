@@ -4,12 +4,12 @@ import http.client
 maxlen = 1024 * 1024 * 1024 # 1 GB
 
 def parse_multipart(fp, pdict):
-	'''
+	"""
 		most of this code is copied straight from
 		`cgi.parse_multipart <https://github.com/python/cpython/blob/ad76602f69d884e491b0913c641dd8e42902c36c/Lib/cgi.py#L201>`_.
 		the only difference is that it returns a :class:`.MultipartFile` for any part with a ``filename``
 		param in its content-disposition (instead of just the bytes).
-	'''
+	"""
 	boundary = pdict.get('boundary', b'')
 	if not cgi.valid_boundary(boundary):
 		raise ValueError('Invalid boundary in multipart form: %r' % boundary)
@@ -82,12 +82,12 @@ def parse_multipart(fp, pdict):
 	return partdict
 
 class MultipartFile:
-	'''
+	"""
 		instance attrs:
 
 		* ``data`` - a bytes
 		* ``filename`` - a str
-	'''
+	"""
 	def __init__(self, data, filename):
 		self.data = data
 		self.filename = filename

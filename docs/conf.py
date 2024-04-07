@@ -209,7 +209,7 @@ htmlhelp_basename = 'pigwigdoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-	('index', 'pigwig', 'pigwig Documentation', ['raylu', 'jmw327'], 1)
+	('index', 'pigwig', 'pigwig Documentation', ['raylu', 'jmw327'], 1),
 ]
 
 # If true, show URL addresses after external links.

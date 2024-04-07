@@ -1,6 +1,6 @@
+import re
 import textwrap
 from typing import Callable, Dict, List, Tuple
-import re
 
 from . import exceptions
 

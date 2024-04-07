@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections import UserDict
-import copy
 import datetime
 import hashlib
 import hmac
@@ -9,11 +7,12 @@ import http.cookies
 import json as jsonlib
 import time
 import typing
+from collections import UserDict
 
 from . import exceptions
 
 class Request:
-	'''
+	"""
 	an instance of this class is passed to every route handler. has the following instance attrs:
 
 	* ``app`` - an instance of :class:`.PigWig`
@@ -27,7 +26,7 @@ class Request:
 	  `http.cookies.SimpleCookie <https://docs.python.org/3/library/http.cookies.html#http.cookies.SimpleCookie>`_
 	* ``wsgi_environ`` - the raw `WSGI environ <https://www.python.org/dev/peps/pep-0333/#environ-variables>`_
 	  handed down from the server
-	'''
+	"""
 
 	def __init__(self, app, method: str, path: str, query: typing.Mapping[str, str |  list[str]],
 			headers: 'HTTPHeaders', body, cookies, wsgi_environ: dict[str, typing.Any]) -> None:
@@ -41,7 +40,7 @@ class Request:
 		self.wsgi_environ = wsgi_environ
 
 	def get_secure_cookie(self, key: str, max_time: datetime.timedelta) -> str | None:
-		'''
+		"""
 		decode and verify a cookie set with :func:`Response.set_secure_cookie`
 
 		:param key: ``key`` passed to ``set_secure_cookie``
@@ -52,7 +51,7 @@ class Request:
 		  larger windows during which a replay attack is valid. this can be None, in which case no
 		  expiry check is performed
 		:rtype: str or None
-		'''
+		"""
 		try:
 			cookie = self.cookies[key].value
 		except KeyError:
@@ -93,10 +92,10 @@ class Response:
 	* ``headers`` - a list of 2-tuples
 	'''
 
-	DEFAULT_HEADERS = [
+	DEFAULT_HEADERS: typing.Sequence[tuple[str, str]] = (
 		('Access-Control-Allow-Origin', '*'),
 		('Access-Control-Allow-Headers', 'Authorization, X-Requested-With, X-Request'),
-	]
+	)
 
 	json_encoder = jsonlib.JSONEncoder(indent='\t') # type: ignore
 	simple_cookie = http.cookies.SimpleCookie() # type: ignore
@@ -106,7 +105,7 @@ class Response:
 		self.body = body
 		self.code = code
 
-		headers = copy.copy(self.DEFAULT_HEADERS)
+		headers = list(self.DEFAULT_HEADERS)
 		headers.append(('Content-Type', content_type))
 		if location:
 			headers.append(('Location', location))
@@ -117,7 +116,7 @@ class Response:
 	def set_cookie(self, key: str, value: typing.Any, domain: str | None=None, path: str='/',
 			expires: datetime.datetime | None=None, max_age: datetime.timedelta | None =None, secure: bool=False,
 			http_only: bool=False) -> None:
-		'''
+		"""
 		adds a Set-Cookie header
 
 		:type expires: datetime.datetime
@@ -128,7 +127,7 @@ class Response:
 		:param secure: controls when the browser sends the cookie back - unrelated to :func:`set_secure_cookie`
 
 		see `the docs <https://tools.ietf.org/html/rfc6265#section-4.1>`_ for an explanation of the other params
-		'''
+		"""
 		cookie = '%s=%s' % (key, self.simple_cookie.value_encode(value)[1])
 		if domain:
 			cookie += '; Domain=%s' % domain
@@ -145,7 +144,7 @@ class Response:
 		self.headers.append(('Set-Cookie', cookie))
 
 	def set_secure_cookie(self, request: Request, key: str, value: typing.Any, **kwargs) -> None:
-		'''
+		"""
 		this function accepts the same keyword arguments as :func:`.set_cookie` but stores a
 		timestamp and a signature based on ``request.app.cookie_secret``. decode with
 		:func:`Request.get_secure_cookie`.
@@ -155,7 +154,7 @@ class Response:
 		signed and tamper-proof (assuming the ``cookie_secret`` is secure). because we store the
 		signing time, expiry is checked with ``get_secure_cookie``. you generally will want to pass
 		this function a ``max_age`` equal to ``max_time`` used when reading the cookie.
-		'''
+		"""
 		ts = int(time.time())
 		value_ts = '%s|%s' % (value, ts)
 		signature = _hash(key + '|' + value_ts, request.app.cookie_secret)
@@ -164,27 +163,27 @@ class Response:
 
 	@classmethod
 	def json(cls, obj: typing.Any) -> 'Response':
-		'''
+		"""
 		generate a streaming :class:`.Response` object from an object with an ``application/json``
 		content type. the default :attr:`.json_encoder` indents with tabs - override if you want
 		different indentation or need special encoding.
-		'''
+		"""
 		body = cls._gen_json(obj)
 		return Response(body, content_type='application/json; charset=utf-8')
 
 	@classmethod
 	def _gen_json(cls, obj: typing.Any) -> typing.Iterator[bytes]:
-		'''
+		"""
 		internal use generator for converting
 		`json.JSONEncoder.iterencode <https://docs.python.org/3/library/json.html#json.JSONEncoder.iterencode>`_
 		output to bytes
-		'''
+		"""
 		for chunk in cls.json_encoder.iterencode(obj):
 			yield chunk.encode('utf-8')
 
 	@classmethod
 	def render(cls, request: Request, template: str, context: dict[str, typing.Any]) -> 'Response':
-		'''
+		"""
 		generate a streaming :class:`.Response` object from a template and a context with a
 		``text/html`` content type.
 
@@ -194,7 +193,7 @@ class Response:
 		:param template: the template name to render, relative to ``request.app.template_dir``
 		:param context: if you used the default jinja2 template engine, this is a dict
 
-		'''
+		"""
 		body = request.app.template_engine.render(template, context)
 		response = cls(body, content_type='text/html; charset=utf-8')
 		return response
@@ -205,10 +204,10 @@ def _hash(value_ts: str, cookie_secret: bytes) -> str:
 	return signature
 
 class HTTPHeaders(UserDict): # inherit so that __init__ and fromkeys work (even though we never use them)
-	'''
+	"""
 	behaves like a regular :class:`dict` but
 	`casefolds <https://docs.python.org/3/library/stdtypes.html#str.casefold>`_ the keys
-	'''
+	"""
 
 	def __setitem__(self, key, value):
 		self.data[key.casefold()] = value

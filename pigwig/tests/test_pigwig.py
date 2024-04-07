@@ -2,7 +2,7 @@ import io
 import math
 import textwrap
 import unittest
-from unittest import mock # type: ignore
+from unittest import mock
 
 from pigwig import PigWig
 from pigwig.exceptions import HTTPException
@@ -88,7 +88,6 @@ class PigWigTests(unittest.TestCase):
 		heh = mock.MagicMock()
 		app = PigWig([], http_exception_handler=heh)
 		app(environ, start_response)
-		# pylint: disable=unsubscriptable-object
 		http_exception = heh.call_args[0][0]
 		self.assertEqual(http_exception.code, 404)
 

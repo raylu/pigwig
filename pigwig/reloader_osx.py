@@ -1,7 +1,7 @@
 import os
 import sys
 
-from fsevents import Observer, Stream # type: ignore
+from fsevents import Observer, Stream  # type: ignore[import-not-found]
 
 observer = Observer()
 observer.daemon = True

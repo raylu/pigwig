@@ -1,11 +1,11 @@
-from collections import namedtuple
 import ctypes
 import ctypes.util
-from enum import IntEnum
 import errno
 import os
 import struct
 import typing
+from collections import namedtuple
+from enum import IntEnum
 
 libc = ctypes.cdll.LoadLibrary(typing.cast(str, ctypes.util.find_library('c')))
 libc.__errno_location.restype = ctypes.POINTER(ctypes.c_int)

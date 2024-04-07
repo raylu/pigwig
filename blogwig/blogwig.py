@@ -7,8 +7,8 @@ import getpass
 import hashlib
 import hmac
 import os
-from os import path
 import sqlite3
+from os import path
 
 from pigwig import PigWig, Response, default_http_exception_handler
 from pigwig.exceptions import HTTPException

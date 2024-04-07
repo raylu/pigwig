@@ -4,14 +4,14 @@ import cgi
 import copy
 import http.client
 import http.cookies
-from inspect import isgenerator
 import json
 import sys
 import textwrap
 import traceback
-from typing import Any, BinaryIO, Callable, Iterable, Mapping, MutableMapping, TextIO
 import urllib.parse
-import wsgiref.simple_server # type: ignore
+import wsgiref.simple_server
+from inspect import isgenerator
+from typing import Any, BinaryIO, Callable, Iterable, Mapping, MutableMapping, TextIO
 
 from . import exceptions, multipart
 from .request_response import HTTPHeaders, Request, Response
@@ -32,7 +32,7 @@ HTTPExceptionHandler = Callable[[exceptions.HTTPException, TextIO, Request, 'Pig
 ExceptionHandler = Callable[[Exception, TextIO, Request, 'PigWig'], Response]
 
 class PigWig:
-	'''
+	"""
 		main WSGI entrypoint. this is a class but defines a :func:`.__call__` so instances of it can
 		be passed directly to WSGI servers.
 
@@ -87,7 +87,7 @@ class PigWig:
 		* ``cookie_secret``
 		* ``http_exception_handler``
 		* ``exception_handler``
-	'''
+	"""
 
 	def __init__(self, routes, template_dir: str | None=None,
 			template_engine: type=JinjaTemplateEngine, cookie_secret: bytes | None=None,
@@ -108,7 +108,7 @@ class PigWig:
 		self.response_done_handler = response_done_handler
 
 	def __call__(self, environ: dict, start_response: Callable) -> Iterable[bytes]:
-		''' main WSGI entrypoint '''
+		""" main WSGI entrypoint """
 		errors = environ.get('wsgi.errors', sys.stderr)
 		try:
 			if environ['REQUEST_METHOD'] == 'OPTIONS':
@@ -119,7 +119,7 @@ class PigWig:
 			try:
 				try:
 					if err:
-						raise err # pylint: disable=raising-bad-type
+						raise err
 
 					handler, kwargs = self.routes.route(request.method, request.path)
 					response = handler(request, **kwargs)
@@ -129,7 +129,7 @@ class PigWig:
 				response = self.exception_handler(e, errors, request, self)
 
 			if isinstance(response.body, str):
-				response.body = [response.body.encode('utf-8')] # pylint: disable=no-member
+				response.body = [response.body.encode('utf-8')]
 			elif isinstance(response.body, bytes):
 				response.body = [response.body]
 			elif response.body is None:
@@ -142,13 +142,13 @@ class PigWig:
 			if self.response_done_handler:
 				self.response_done_handler(request, response)
 			return response.body
-		except: # something went very wrong handling OPTIONS, in error handling, or in sending the response
+		except Exception: # something went very wrong handling OPTIONS, in error handling, or in sending the response
 			errors.write(traceback.format_exc())
 			start_response('500 Internal Server Error', [])
 			return [b'internal server error']
 
 	def build_request(self, environ: dict) -> tuple[Request, Exception | None]:
-		''' builds :class:`.Response` objects. for internal use. '''
+		""" builds :class:`.Response` objects. for internal use. """
 		method = environ['REQUEST_METHOD']
 		path = environ['PATH_INFO']
 		query: Mapping[str, list[str] | str] = {}
@@ -188,18 +188,18 @@ class PigWig:
 		return Request(self, method, path, query, headers, body, cookies, environ), err
 
 	def main(self, host='0.0.0.0', port=None):
-		'''
+		"""
 		sets up the autoreloader and runs a
 		`wsgiref.simple_server <https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server>`_.
 		useful for development.
-		'''
+		"""
 
 		have_reloader = True
 		if sys.platform == 'linux':
-			from . import reloader_linux as reloader # pylint: disable=import-outside-toplevel
+			from . import reloader_linux as reloader
 		elif sys.platform == 'darwin':
 			try:
-				from . import reloader_osx as reloader # pylint: disable=import-outside-toplevel
+				from . import reloader_osx as reloader
 			except ImportError as e:
 				have_reloader = False
 				print('install', e.name, 'for auto-reloading')

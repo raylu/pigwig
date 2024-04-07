@@ -1,6 +1,6 @@
+import _thread  # noqa: F401
 import os
 import sys
-import _thread # pylint: disable=unused-import
 
 from . import inotify
 
@@ -17,7 +17,6 @@ def init():
 		wd = inotify.add_watch(fd, pathname, inotify.IN.CLOSE_WRITE)
 		wds[wd] = pathname
 
-	# pylint: disable=redefined-outer-name,import-outside-toplevel
 	try:
 		import eventlet
 	except ImportError:
