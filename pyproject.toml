@@ -1,10 +1,13 @@
 [tool.mypy]
-python_version = '3.6'
+python_version = '3.8'
 disallow_untyped_defs = true
 implicit_reexport = false
 strict_equality = true
 warn_unused_configs = true
 warn_unused_ignores = true
+[[tool.mypy.overrides]]
+module = 'pigwig.tests.*'
+disallow_untyped_defs = false
 [[tool.mypy.overrides]]
 module = 'eventlet'
 ignore_missing_imports = true

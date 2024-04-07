@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 import textwrap
-from typing import Callable
+from typing import Callable, Iterable, Sequence, Tuple
 
 from . import exceptions
 
@@ -13,7 +15,7 @@ class RouteNode:
 		self.param_is_path: bool | None = None
 
 	param_re = re.compile(r'<([\w:]+)>')
-	def assign_route(self, path_elements: list[str], method: str, handler: Callable) -> None:
+	def assign_route(self, path_elements: Sequence[str], method: str, handler: Callable) -> None:
 		if not path_elements or path_elements[0] == '':
 			if len(path_elements) > 1:
 				raise Exception('cannot have consecutive / in routes')
@@ -89,7 +91,7 @@ class RouteNode:
 			rval.append('%s: %s' % (name, self.param_children))
 		return '{\n%s\n}' % textwrap.indent('\n'.join(rval), '\t')
 
-RouteDefinition = list[tuple[str, str, Callable]]
+RouteDefinition = Iterable[Tuple[str, str, Callable]]
 
 def build_route_tree(routes: RouteDefinition) -> RouteNode:
 	root_node = RouteNode()

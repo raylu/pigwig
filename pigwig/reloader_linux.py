@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import _thread  # noqa: F401
 import os
 import sys
