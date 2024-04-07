@@ -8,9 +8,9 @@ class RouteNode:
 	def __init__(self) -> None:
 		self.method_handlers = {} # type: Dict[str, Callable]
 		self.static_children = {} # type: Dict[str, RouteNode]
-		self.param_name = None # type: str
-		self.param_children = None # type: RouteNode
-		self.param_is_path = None # type: bool
+		self.param_name: str | None = None
+		self.param_children: RouteNode | None = None
+		self.param_is_path: bool | None = None
 
 	param_re = re.compile(r'<([\w:]+)>')
 	def assign_route(self, path_elements: List[str], method: str, handler: Callable) -> None:
@@ -37,6 +37,8 @@ class RouteNode:
 					self.param_is_path = False
 			elif self.param_name != param.group(1):
 				raise exceptions.RouteConflict(method, handler)
+			else:
+				assert self.param_children is not None
 			child = self.param_children
 		else:
 			if element not in self.static_children:
@@ -67,6 +69,7 @@ class RouteNode:
 			else:
 				params[self.param_name] = element
 			child = self.param_children
+			assert child is not None
 		return child.get_route(method, remaining, params)
 
 	def route(self, method: str, path: str) -> Tuple[Callable, Dict]:

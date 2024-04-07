@@ -1,12 +1,13 @@
 from collections import namedtuple
-import ctypes # type:ignore
-import ctypes.util # type:ignore
+import ctypes
+import ctypes.util
 from enum import IntEnum
 import errno
 import os
 import struct
+import typing
 
-libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+libc = ctypes.cdll.LoadLibrary(typing.cast(str, ctypes.util.find_library('c')))
 libc.__errno_location.restype = ctypes.POINTER(ctypes.c_int)
 
 Event = namedtuple('Event', ['wd', 'mask', 'cookie', 'name'])

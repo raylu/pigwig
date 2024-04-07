@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import UserDict
 import copy
 import datetime
@@ -6,7 +8,7 @@ import hmac
 import http.cookies
 import json as jsonlib
 import time
-from typing import Any, Dict, Generator, List, Tuple, Union
+import typing
 
 from . import exceptions
 
@@ -27,8 +29,8 @@ class Request:
 	  handed down from the server
 	'''
 
-	def __init__(self, app, method: str, path: str, query: Dict[str, Union[str, List[str]]],
-			headers: 'HTTPHeaders', body, cookies, wsgi_environ: Dict[str, Any]) -> None:
+	def __init__(self, app, method: str, path: str, query: typing.Mapping[str, str |  list[str]],
+			headers: 'HTTPHeaders', body, cookies, wsgi_environ: dict[str, typing.Any]) -> None:
 		self.app = app
 		self.method = method
 		self.path = path
@@ -38,7 +40,7 @@ class Request:
 		self.cookies = cookies
 		self.wsgi_environ = wsgi_environ
 
-	def get_secure_cookie(self, key: str, max_time: datetime.timedelta) -> str:
+	def get_secure_cookie(self, key: str, max_time: datetime.timedelta) -> str | None:
 		'''
 		decode and verify a cookie set with :func:`Response.set_secure_cookie`
 
@@ -100,7 +102,7 @@ class Response:
 	simple_cookie = http.cookies.SimpleCookie() # type: ignore
 
 	def __init__(self, body=None, code: int=200, content_type: str='text/plain',
-			location: str=None, extra_headers: List[Tuple[str, str]]=None) -> None:
+			location: str | None=None, extra_headers: list[tuple[str, str]] | None=None) -> None:
 		self.body = body
 		self.code = code
 
@@ -112,8 +114,8 @@ class Response:
 			headers.extend(extra_headers)
 		self.headers = headers
 
-	def set_cookie(self, key: str, value: Any, domain: str=None, path: str='/',
-			expires: datetime.datetime=None, max_age: datetime.timedelta=None, secure: bool=False,
+	def set_cookie(self, key: str, value: typing.Any, domain: str | None=None, path: str='/',
+			expires: datetime.datetime | None=None, max_age: datetime.timedelta | None =None, secure: bool=False,
 			http_only: bool=False) -> None:
 		'''
 		adds a Set-Cookie header
@@ -142,7 +144,7 @@ class Response:
 			cookie += '; HttpOnly'
 		self.headers.append(('Set-Cookie', cookie))
 
-	def set_secure_cookie(self, request: Request, key: str, value: Any, **kwargs) -> None:
+	def set_secure_cookie(self, request: Request, key: str, value: typing.Any, **kwargs) -> None:
 		'''
 		this function accepts the same keyword arguments as :func:`.set_cookie` but stores a
 		timestamp and a signature based on ``request.app.cookie_secret``. decode with
@@ -161,7 +163,7 @@ class Response:
 		self.set_cookie(key, value_signed, **kwargs)
 
 	@classmethod
-	def json(cls, obj: Any) -> 'Response':
+	def json(cls, obj: typing.Any) -> 'Response':
 		'''
 		generate a streaming :class:`.Response` object from an object with an ``application/json``
 		content type. the default :attr:`.json_encoder` indents with tabs - override if you want
@@ -171,7 +173,7 @@ class Response:
 		return Response(body, content_type='application/json; charset=utf-8')
 
 	@classmethod
-	def _gen_json(cls, obj: Any) -> Generator[bytes, None, None]:
+	def _gen_json(cls, obj: typing.Any) -> typing.Iterator[bytes]:
 		'''
 		internal use generator for converting
 		`json.JSONEncoder.iterencode <https://docs.python.org/3/library/json.html#json.JSONEncoder.iterencode>`_
@@ -181,7 +183,7 @@ class Response:
 			yield chunk.encode('utf-8')
 
 	@classmethod
-	def render(cls, request: Request, template: str, context: Dict[str, Any]) -> 'Response':
+	def render(cls, request: Request, template: str, context: dict[str, typing.Any]) -> 'Response':
 		'''
 		generate a streaming :class:`.Response` object from a template and a context with a
 		``text/html`` content type.

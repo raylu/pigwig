@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import cgi
 import copy
 import http.client
@@ -7,7 +9,7 @@ import json
 import sys
 import textwrap
 import traceback
-from typing import Any, BinaryIO, Callable, Dict, Iterable, List, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Callable, Iterable, Mapping, MutableMapping, TextIO
 import urllib.parse
 import wsgiref.simple_server # type: ignore
 
@@ -87,8 +89,8 @@ class PigWig:
 		* ``exception_handler``
 	'''
 
-	def __init__(self, routes, template_dir: str=None,
-			template_engine: type=JinjaTemplateEngine, cookie_secret: bytes=None,
+	def __init__(self, routes, template_dir: str | None=None,
+			template_engine: type=JinjaTemplateEngine, cookie_secret: bytes | None=None,
 			http_exception_handler: HTTPExceptionHandler=default_http_exception_handler,
 			exception_handler: ExceptionHandler=default_exception_handler, response_done_handler=None) -> None:
 		if callable(routes):
@@ -105,7 +107,7 @@ class PigWig:
 		self.exception_handler = exception_handler
 		self.response_done_handler = response_done_handler
 
-	def __call__(self, environ: Dict, start_response: Callable) -> Iterable[bytes]:
+	def __call__(self, environ: dict, start_response: Callable) -> Iterable[bytes]:
 		''' main WSGI entrypoint '''
 		errors = environ.get('wsgi.errors', sys.stderr)
 		try:
@@ -145,14 +147,14 @@ class PigWig:
 			start_response('500 Internal Server Error', [])
 			return [b'internal server error']
 
-	def build_request(self, environ: Dict) -> Tuple[Request, Exception]:
+	def build_request(self, environ: dict) -> tuple[Request, Exception | None]:
 		''' builds :class:`.Response` objects. for internal use. '''
 		method = environ['REQUEST_METHOD']
 		path = environ['PATH_INFO']
-		query = {} # type: Dict[str, Union[List[str], str]]
+		query: Mapping[str, list[str] | str] = {}
 		headers = HTTPHeaders() # type: ignore
 		cookies = http.cookies.SimpleCookie() # type: ignore
-		body = None # type: Union[Tuple[Any, int], Dict]
+		body: tuple | dict | None = None
 		err = None
 
 		try:
@@ -160,7 +162,7 @@ class PigWig:
 			if qs:
 				query = parse_qs(qs)
 
-			content_length = environ.get('CONTENT_LENGTH')
+			content_length: int | None = environ.get('CONTENT_LENGTH')
 			if content_length:
 				headers['Content-Length'] = content_length
 				content_length = int(content_length)
@@ -219,12 +221,16 @@ class PigWig:
 		server.serve_forever()
 
 	@staticmethod
-	def handle_urlencoded(body: BinaryIO, length: int, params: Dict[str, str]) -> Dict[str, Union[str, List[str]]]:
+	def handle_urlencoded(body: BinaryIO, length: int | None, params: dict[str, str]) -> Mapping[str, str | list[str]]:
+		if length is None:
+			raise exceptions.HTTPException(411, 'length required for x-www-form-urlencoded body')
 		charset = params.get('charset', 'utf-8')
 		return parse_qs(body.read(length).decode(charset))
 
 	@staticmethod
-	def handle_json(body: BinaryIO, length: int, params: Dict[str, str]) -> Any:
+	def handle_json(body: BinaryIO, length: int | None, params: dict[str, str]) -> Any:
+		if length is None:
+			raise exceptions.HTTPException(411, 'length required for JSON body')
 		charset = params.get('charset', 'utf-8')
 		return json.loads(body.read(length).decode(charset))
 
@@ -237,7 +243,7 @@ class PigWig:
 				form[k] = v[0]
 		return form
 
-	content_handlers = None # type: Dict[str, Callable[[BinaryIO, int, Dict[str, str]], Any]]
+	content_handlers: dict[str, Callable[[BinaryIO, int | None, dict[str, str]], Any]]
 
 PigWig.content_handlers = {
 	'application/json': PigWig.handle_json,
@@ -245,12 +251,12 @@ PigWig.content_handlers = {
 	'multipart/form-data': PigWig.handle_multipart,
 }
 
-def parse_qs(qs: str) -> Dict[str, Union[str, List[str]]]:
+def parse_qs(qs: str) -> Mapping[str, str | list[str]]:
 	if not qs:
 		return {}
 	try:
-		parsed = urllib.parse.parse_qs(qs, keep_blank_values=True, strict_parsing=True,
-				errors='strict') # type: Dict[str, Any]
+		parsed: MutableMapping[str, Any] = urllib.parse.parse_qs(qs,
+				keep_blank_values=True, strict_parsing=True, errors='strict')
 	except UnicodeDecodeError as e:
 		qs_trunc = qs
 		if len(qs_trunc) > 24:

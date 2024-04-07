@@ -1,7 +1,9 @@
+import types
+
 try:
-	import jinja2 # type: ignore
+	import jinja2
 except ImportError:
-	jinja2 = None
+	jinja2: types.ModuleType = None # type: ignore[no-redef]
 
 class JinjaTemplateEngine:
 	def __init__(self, template_dir):

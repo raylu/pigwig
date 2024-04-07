@@ -3,7 +3,7 @@ PigWig
 
 .. py:module:: pigwig
 
-pigwig is a WSGI framework for python 3.4+::
+pigwig is a WSGI framework for python 3.6+::
 
     #!/usr/bin/env python3
 
