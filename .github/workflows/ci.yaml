@@ -1,0 +1,27 @@
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: CI
+
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+        cache: pip
+    - name: install
+      run: pip3 install --progress-bar off ruff coveralls
+    - name: unittest
+      run: coverage run --source pigwig --omit 'pigwig/tests/*' -m unittest -v
+    - name: coveralls
+      uses: coverallsapp/github-action@v2
+    - name: ruff
+      run: ruff check --output-format=github pigwig blogwig

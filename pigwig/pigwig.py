@@ -223,14 +223,14 @@ class PigWig:
 	@staticmethod
 	def handle_urlencoded(body: BinaryIO, length: int | None, params: dict[str, str]) -> Mapping[str, str | list[str]]:
 		if length is None:
-			raise exceptions.HTTPException(411, 'length required for x-www-form-urlencoded body')
+			length = -1
 		charset = params.get('charset', 'utf-8')
 		return parse_qs(body.read(length).decode(charset))
 
 	@staticmethod
 	def handle_json(body: BinaryIO, length: int | None, params: dict[str, str]) -> Any:
 		if length is None:
-			raise exceptions.HTTPException(411, 'length required for JSON body')
+			length = -1
 		charset = params.get('charset', 'utf-8')
 		return json.loads(body.read(length).decode(charset))
 
