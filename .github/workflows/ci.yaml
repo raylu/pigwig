@@ -21,7 +21,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: pip
     - name: install
-      run: pip3 install --progress-bar off ruff coveralls
+      run: pip3 install --progress-bar off coveralls jinja2 mypy ruff
     - name: unittest
       run: coverage run --source pigwig --omit 'pigwig/tests/*' -m unittest -v
     - name: coveralls
@@ -31,3 +31,7 @@ jobs:
         parallel-finished: true
     - name: ruff
       run: ruff check --output-format=github pigwig blogwig
+    - uses: tsuyoshicho/action-mypy@v4
+      with:
+        fail_on_error: true
+        reporter: github-check

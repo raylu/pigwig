@@ -1,5 +1,6 @@
 [tool.mypy]
 python_version = '3.8'
+exclude = ['setup.py', 'docs/conf.py']
 disallow_untyped_defs = true
 implicit_reexport = false
 strict_equality = true
@@ -7,6 +8,9 @@ warn_unused_configs = true
 warn_unused_ignores = true
 [[tool.mypy.overrides]]
 module = 'pigwig.tests.*'
+disallow_untyped_defs = false
+[[tool.mypy.overrides]]
+module = 'blogwig'
 disallow_untyped_defs = false
 [[tool.mypy.overrides]]
 module = 'eventlet'
