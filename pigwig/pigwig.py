@@ -160,7 +160,7 @@ class PigWig:
 		query: Mapping[str, list[str] | str] = {}
 		headers = HTTPHeaders()
 		cookies = http.cookies.SimpleCookie()
-		body: tuple | dict | None = None
+		body = {}
 		err = None
 
 		try:
@@ -174,7 +174,6 @@ class PigWig:
 				content_length = int(content_length_str)
 			else:
 				content_length = None
-			body = (environ['wsgi.input'], content_length)
 			content_type = environ.get('CONTENT_TYPE')
 			if content_type:
 				headers['Content-Type'] = content_type

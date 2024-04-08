@@ -32,7 +32,7 @@ class Request:
 	"""
 
 	def __init__(self, app: PigWig, method: str, path: str, query: typing.Mapping[str, str |  list[str]],
-				headers: HTTPHeaders, body: tuple | dict | None, cookies: http.cookies.BaseCookie,
+				headers: HTTPHeaders, body: dict, cookies: http.cookies.BaseCookie,
 				wsgi_environ: dict[str, typing.Any]) -> None:
 		self.app = app
 		self.method = method
