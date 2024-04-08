@@ -7,15 +7,19 @@ pigwig is a WSGI framework for python 3.6+::
 
     #!/usr/bin/env python3
 
+    import typing
     from pigwig import PigWig, Response
+    if typing.TYPE_CHECKING:
+        from pigwig import Request
+        from pigwig.routes import RouteDefinition
 
-    def root(request):
+    def root(request: Request) -> Response:
         return Response('hello, world!')
 
-    def shout(request, word):
+    def shout(request: Request, word: str) -> Response:
         return Response.json({'input': word, 'OUTPUT': word.upper()})
 
-    routes = [
+    routes: RouteDefinition = [
         ('GET', '/', root),
         ('GET', '/shout/<word>', shout),
     ]
