@@ -11,7 +11,7 @@ classifiers = [
 ]
 [project.urls]
 homepage = 'https://github.com/raylu/pigwig'
-issues = 'https://github.com/raylu/pigwig/issues'
+docs = 'https://pigwig.rtfd.org'
 [build-system]
 requires = ['setuptools>=69']
 build-backend = 'setuptools.build_meta'
