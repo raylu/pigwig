@@ -1,3 +1,24 @@
+[project]
+name = 'pigwig'
+version = '0.8.0'
+authors = [{name='raylu'}]
+description = 'a python 3.6+ WSGI framework'
+requires-python = '>=3.6'
+readme = 'README.md'
+classifiers = [
+	'Programming Language :: Python :: 3.6',
+	'Topic :: Internet :: WWW/HTTP :: WSGI',
+]
+[project.urls]
+homepage = 'https://github.com/raylu/pigwig'
+issues = 'https://github.com/raylu/pigwig/issues'
+[build-system]
+requires = ['setuptools>=69']
+build-backend = 'setuptools.build_meta'
+[tool.setuptools.packages.find]
+include = ['pigwig']
+exclude = ['pigwig.tests']
+
 [tool.mypy]
 python_version = '3.8'
 exclude = ['setup.py', 'docs/conf.py']
