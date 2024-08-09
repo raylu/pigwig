@@ -207,9 +207,9 @@ class PigWig:
 		elif sys.platform == 'darwin':
 			try:
 				from . import reloader_osx as reloader
-			except ImportError as e:
+			except ImportError:
 				have_reloader = False
-				print('install', e.name, 'for auto-reloading')
+				print('install MacFSEvents for auto-reloading')
 		else:
 			have_reloader = False
 			print('no reloader available for', sys.platform)
