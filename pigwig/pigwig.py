@@ -186,9 +186,9 @@ class PigWig:
 			if http_cookie:
 				cookies.load(http_cookie)
 
-			for key in environ:
+			for key, val in environ.items():
 				if key.startswith('HTTP_'):
-					headers[key[5:].replace('_', '-')] = environ[key]
+					headers[key[5:].replace('_', '-')] = val
 		except Exception as e:
 			err = e
 

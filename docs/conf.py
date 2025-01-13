@@ -86,7 +86,9 @@ autodoc_default_flags = ['show-inheritance', 'members', 'undoc-members', 'privat
 # -- linkcode
 
 def linkcode_resolve(domain, info):
-	import pigwig, os.path
+	import os.path
+
+	import pigwig
 	if domain != 'py' or not info['module']:
 		return None
 	module = info['module']
