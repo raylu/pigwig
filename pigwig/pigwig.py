@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import cgi
 import copy
 import http.client
 import http.cookies
@@ -177,7 +176,7 @@ class PigWig:
 			content_type = environ.get('CONTENT_TYPE')
 			if content_type:
 				headers['Content-Type'] = content_type
-				media_type, params = cgi.parse_header(content_type)
+				media_type, params = multipart.parse_header(content_type)
 				handler = self.content_handlers.get(media_type)
 				if handler:
 					body = handler(environ['wsgi.input'], content_length, params)
