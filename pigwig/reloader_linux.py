@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-import _thread  # noqa: F401
+try:
+	import eventlet
+except ImportError:
+	import _thread
+else:
+	_thread = eventlet.patcher.original('_thread')
 import os
 import sys
 import typing
@@ -20,12 +25,6 @@ def init() -> None:
 		wd = inotify.add_watch(fd, pathname, inotify.IN.CLOSE_WRITE)
 		wds[wd] = pathname
 
-	try:
-		import eventlet
-	except ImportError:
-		pass
-	else:
-		_thread = eventlet.patcher.original('_thread')
 	_thread.start_new_thread(_reloader, (fd, wds))
 
 def _reloader(fd: int, wds: dict[int, str]) -> typing.NoReturn:
