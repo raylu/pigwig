@@ -13,21 +13,21 @@ class PigWigTests(unittest.TestCase):
 		app = PigWig([])
 		environ = {
 			'REQUEST_METHOD': 'test method',
-			'PATH_INFO': 'test path?a=1&b=2&b=3',
+			'PATH_INFO': 'test path?a=1&b=2&b=3&c=\xe4\xbd\xa0\xe5\xa5\xbd',
 			'HTTP_COOKIE': 'a=1; a="2"',
 			'wsgi.input': None,
 		}
 		req, err = app.build_request(environ)
 		self.assertIsNone(err)
 		self.assertEqual(req.method, 'test method')
-		self.assertEqual(req.path, 'test path?a=1&b=2&b=3')
+		self.assertEqual(req.path, 'test path?a=1&b=2&b=3&c=你好')
 		self.assertEqual(req.query, {})
 		self.assertEqual(req.cookies['a'].value, '2')
 
-		environ['QUERY_STRING'] = 'a=1&b=2&b=3'
+		environ['QUERY_STRING'] = 'a=1&b=2&b=3&c=你好'
 		req, err = app.build_request(environ)
 		self.assertIsNone(err)
-		self.assertEqual(req.query, {'a': '1', 'b': ['2', '3']})
+		self.assertEqual(req.query, {'a': '1', 'b': ['2', '3'], 'c': '你好'})
 
 		environ['CONTENT_TYPE'] = 'application/json; charset=utf8'
 		environ['wsgi.input'] = io.BytesIO(b'{"a": 1, "a": NaN}')

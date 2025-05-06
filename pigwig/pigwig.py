@@ -155,7 +155,7 @@ class PigWig:
 	def build_request(self, environ: dict) -> tuple[Request, Exception | None]:
 		""" builds :class:`.Response` objects. for internal use. """
 		method = environ['REQUEST_METHOD']
-		path = environ['PATH_INFO']
+		path = environ['PATH_INFO'].encode('latin-1').decode('utf-8') # https://github.com/python/cpython/issues/60883
 		query: Mapping[str, list[str] | str] = {}
 		headers = HTTPHeaders()
 		cookies = http.cookies.SimpleCookie()
