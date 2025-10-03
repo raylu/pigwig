@@ -4,6 +4,7 @@ import datetime
 import hashlib
 import hmac
 import http.cookies
+import io
 import json as jsonlib
 import time
 import typing
@@ -185,8 +186,15 @@ class Response:
 		`json.JSONEncoder.iterencode <https://docs.python.org/3/library/json.html#json.JSONEncoder.iterencode>`_
 		output to bytes
 		"""
+		buf = io.BytesIO()
 		for chunk in cls.json_encoder.iterencode(obj):
-			yield chunk.encode('utf-8')
+			buf.write(chunk.encode('utf-8'))
+			if buf.tell() >= 4096:
+				yield buf.getvalue()
+				buf.seek(0)
+				buf.truncate(0)
+		if buf.tell() > 0:
+			yield buf.getvalue()
 
 	@classmethod
 	def render(cls, request: Request, template: str, context: dict[str, typing.Any]) -> 'Response':
