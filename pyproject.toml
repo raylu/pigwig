@@ -20,11 +20,12 @@ include = ['pigwig']
 exclude = ['pigwig.tests']
 [dependency-groups]
 dev = [
+    'mypy',
     'ruff',
 ]
 
 [tool.mypy]
-python_version = '3.8'
+python_version = '3.9'
 exclude = ['setup.py', 'docs/conf.py']
 disallow_untyped_defs = true
 implicit_reexport = false

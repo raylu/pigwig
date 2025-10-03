@@ -10,7 +10,7 @@ import traceback
 import urllib.parse
 import wsgiref.simple_server
 from inspect import isgenerator
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, MutableMapping, TextIO
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, MutableMapping, TextIO, cast
 
 from . import exceptions, multipart
 from .request_response import HTTPHeaders, Request, Response
@@ -114,7 +114,7 @@ class PigWig:
 
 	def __call__(self, environ: dict, start_response: Callable) -> Iterable[bytes]:
 		""" main WSGI entrypoint """
-		errors = environ.get('wsgi.errors', sys.stderr)
+		errors = cast(TextIO, environ.get('wsgi.errors', sys.stderr))
 		try:
 			if environ['REQUEST_METHOD'] == 'OPTIONS':
 				start_response('200 OK', copy.copy(Response.DEFAULT_HEADERS))
