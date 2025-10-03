@@ -18,6 +18,10 @@ build-backend = 'setuptools.build_meta'
 [tool.setuptools.packages.find]
 include = ['pigwig']
 exclude = ['pigwig.tests']
+[dependency-groups]
+dev = [
+    'ruff',
+]
 
 [tool.mypy]
 python_version = '3.8'
@@ -47,7 +51,8 @@ select = [
 	'RUF',
 ]
 ignore = [
-	'E101' # mixed-spaces-and-tabs
+	'E101', # mixed-spaces-and-tabs
+	'PLC0415', # import-outside-top-level
 ]
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = 'single'
