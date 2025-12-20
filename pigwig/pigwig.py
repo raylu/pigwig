@@ -37,7 +37,7 @@ ExceptionHandler = Callable[[Exception, TextIO, Request, 'PigWig'], Response]
 
 class PigWig:
 	"""
-		main WSGI entrypoint. this is a class but defines a :func:`.__call__` so instances of it can
+		main WSGI entrypoint. this is a class but defines a [`__call__`][] so instances of it can
 		be passed directly to WSGI servers.
 
 		:type routes: list or function
@@ -50,10 +50,10 @@ class PigWig:
 		      keyword arguments. params cannot be optional, but you can map two routes to a handler
 		      that takes an optional argument. params must make up the entire path segment - you
 		      cannot have ``/post_<id>``.
-		    * ``handler`` is a function taking a :class:`.Request` positional argument and any
+		    * ``handler`` is a function taking a [Request][] positional argument and any
 		      number of param keyword arguments
 		  having two identical static routes or two overlapping param segments (``/foo/<bar>`` and
-		  ``/foo/<baz>``) with the same method raises an :class:`.exceptions.RouteConflict`
+		  ``/foo/<baz>``) with the same method raises an [exceptions.RouteConflict][]
 
 		:type template_dir: str
 		:param template_dir: if specified, a ``template_engine`` is created with this as the argument.
@@ -66,18 +66,18 @@ class PigWig:
 
 		:type cookie_secret: str
 		:param cookie_secret: app-wide secret used for signing secure cookies. see
-		  :func:`Request.get_secure_cookie`
+		  [Request.get_secure_cookie][]
 
 		:param http_exception_handler: a function that will be called when an
-		  :class:`.exceptions.HTTPException` is raised. it will be passed the original exception,
-		  `wsgi.errors <https://www.python.org/dev/peps/pep-0333/#environ-variables>`_, the
-		  :class:`.Request`, and a reference to this :class:`.PigWig` instance. it must return a
-		  :class:`.Response` and should almost certainly have the code of the original exception.
+		  [exceptions.HTTPException][] is raised. it will be passed the original exception,
+		  [`wsgi.errors`](https://www.python.org/dev/peps/pep-0333/#environ-variables), the
+		  [Request][], and a reference to this [PigWig][] instance. it must return a
+		  [Response][] and should almost certainly have the code of the original exception.
 		  exceptions raised here can be handled by ``exception_handler``.
 
 		:param exception_handler: a function that will be called when any other exception is raised.
 		  it will be passed the same arguments as ``http_exception_handler`` and must also return a
-		  :class:`.Response`. be careful: raising an exception here is bad.
+		  [Response][]. be careful: raising an exception here is bad.
 
 		:param response_done_handler: a function that will be called when control has been returned
 		  back to the WSGI server. it will be passed a request and response. be careful: raising an
@@ -153,7 +153,7 @@ class PigWig:
 			return [b'internal server error']
 
 	def build_request(self, environ: dict) -> tuple[Request, Exception | None]:
-		""" builds :class:`.Response` objects. for internal use. """
+		""" builds [Response][] objects. for internal use. """
 		method = environ['REQUEST_METHOD']
 		path = environ['PATH_INFO'].encode('latin-1').decode('utf-8') # https://github.com/python/cpython/issues/60883
 		query: Mapping[str, list[str] | str] = {}
@@ -196,7 +196,7 @@ class PigWig:
 	def main(self, host: str='0.0.0.0', port: int | None=None) -> None:
 		"""
 		sets up the autoreloader and runs a
-		`wsgiref.simple_server <https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server>`_.
+		[wsgiref.simple_server](https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server).
 		useful for development.
 		"""
 
@@ -252,6 +252,7 @@ class PigWig:
 		return form
 
 	content_handlers: dict[str, Callable[[io.BufferedIOBase, int | None, dict[str, str]], Any]]
+	''' map of content types to body parsers '''
 
 PigWig.content_handlers = {
 	'application/json': PigWig.handle_json,

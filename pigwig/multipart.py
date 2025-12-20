@@ -10,8 +10,8 @@ maxlen = 1024 * 1024 * 1024 # 1 GB
 def parse_multipart(fp: io.BufferedIOBase, pdict: dict) -> dict[str, list[bytes | MultipartFile]]:
 	"""
 		most of this code is copied straight from
-		`cgi.parse_multipart <https://github.com/python/cpython/blob/ad76602f69d884e491b0913c641dd8e42902c36c/Lib/cgi.py#L201>`_.
-		the only difference is that it returns a :class:`.MultipartFile` for any part with a ``filename``
+		[cgi.parse_multipart](https://github.com/python/cpython/blob/ad76602f69d884e491b0913c641dd8e42902c36c/Lib/cgi.py#L201).
+		the only difference is that it returns a [MultipartFile][] for any part with a ``filename``
 		param in its content-disposition (instead of just the bytes).
 	"""
 	boundary = pdict.get('boundary', b'')
@@ -118,12 +118,11 @@ def _parseparam(s: str) -> typing.Iterator[str]:
 		s = s[end:]
 
 class MultipartFile:
-	"""
-		instance attrs:
+	data: bytes
+	''''''
+	filename: str
+	''''''
 
-		* ``data`` - a bytes
-		* ``filename`` - a str
-	"""
 	def __init__(self, data: bytes, filename: str) -> None:
 		self.data = data
 		self.filename = filename

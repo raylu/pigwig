@@ -2,8 +2,8 @@ class HTTPException(Exception):
 	"""
 	raise in a route handler to generate a non-200 response
 
-	:param code: interpreted the same way as :attr:`.Response.code`
-	:param body: unlike in :class:`.Response`, must be a ``str``
+	:param code: interpreted the same way as [Response.code][]
+	:param body: unlike in [Response][], must be a ``str``
 	"""
 
 	def __init__(self, code: int, body: str) -> None:
@@ -13,5 +13,5 @@ class HTTPException(Exception):
 
 class RouteConflict(Exception):
 	"""
-	raised when creating a :class:`.PigWig` app if two routes conflict
+	raised when creating a [PigWig][] app if two routes conflict
 	"""

@@ -1,0 +1,72 @@
+site_name: pigwig
+site_url: https://raylu.github.io/pigwig
+repo_url: https://github.com/raylu/pigwig
+edit_uri: edit/main/docs/
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          inventories: [https://docs.python.org/3/objects.inv]
+          options:
+            # https://mkdocstrings.github.io/python/usage/configuration/general/
+            backlinks: tree
+            # https://mkdocstrings.github.io/python/usage/configuration/headings/
+            show_root_heading: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            type_parameter_headings: true
+            # https://mkdocstrings.github.io/python/usage/configuration/members/
+            filters: public
+            inherited_members: true
+            members_order: source
+            # https://mkdocstrings.github.io/python/usage/configuration/docstrings/
+            docstring_style: sphinx
+            docstring_section_style: list
+            merge_init_into_class: true
+            scoped_crossrefs: true
+            # https://mkdocstrings.github.io/python/usage/configuration/signatures
+            annotations_path: source
+            show_signature_annotations: true
+            show_signature_type_parameters: true
+            signature_crossrefs: true
+  - privacy
+  - search
+  - social
+nav:
+  - home: index.md
+  - pigwig.md
+  - request_response.md
+  - multipart.md
+  - exceptions.md
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme)"
+      primary: deep purple
+      toggle:
+        icon: material/brightness-auto
+        name: dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: auto dark/light
+  features:
+    - search.suggest
+markdown_extensions:
+  - pymdownx.superfences
+extra_css: [extra.css]
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/mastodon
+      link: https://vmst.io/@raylu
+      name: mastodon

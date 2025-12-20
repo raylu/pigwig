@@ -1,8 +1,9 @@
 __pycache__/
-/blogwig/blogwig.db
-/docs/_build/
+# mkdocs
+/.cache
 /.coverage
-
-/pigwig.egg-info/
+/blogwig/blogwig.db
 /build/
 /dist/
+/pigwig.egg-info/
+/uv.lock
