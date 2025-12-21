@@ -1,5 +1,5 @@
 site_name: pigwig
-site_url: https://raylu.github.io/pigwig
+site_url: !ENV READTHEDOCS_CANONICAL_URL
 repo_url: https://github.com/raylu/pigwig
 edit_uri: edit/main/docs/
 plugins:

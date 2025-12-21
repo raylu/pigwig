@@ -1,0 +1,3 @@
+git+https://github.com/mkdocstrings/griffe # until https://github.com/mkdocstrings/mkdocstrings/issues/808 releases
+mkdocs-material[imaging]
+mkdocstrings[python]
